@@ -11,7 +11,7 @@ import {
   Upload,
   XCircle,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, Dispatch, SetStateAction } from "react";
 import { defaultDataset } from "./data/defaultDataset";
 import {
@@ -81,6 +81,7 @@ function App() {
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<AnswerResult | null>(null);
   const [answerLogs, setAnswerLogs] = useState<AnswerLog[]>([]);
+  const advanceTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(dataset));
@@ -101,6 +102,27 @@ function App() {
   const currentScenario = rounds[combat.roundIndex];
   const displayedCombat = lastResult?.nextState ?? combat;
   const canStart = userSide && enemySide && userSide !== enemySide && validation.errors.length === 0;
+
+  useEffect(() => {
+    if (!lastResult) {
+      return;
+    }
+
+    if (advanceTimerRef.current) {
+      window.clearTimeout(advanceTimerRef.current);
+    }
+
+    advanceTimerRef.current = window.setTimeout(() => {
+      advanceRound(lastResult);
+    }, lastResult.nextState.isFinished ? 1600 : 2200);
+
+    return () => {
+      if (advanceTimerRef.current) {
+        window.clearTimeout(advanceTimerRef.current);
+        advanceTimerRef.current = null;
+      }
+    };
+  }, [lastResult]);
 
   function startGame() {
     const nextRounds = buildRoundScenarios(dataset, userSide, enemySide);
@@ -124,12 +146,8 @@ function App() {
     setAnswerLogs((logs) => [...logs, makeAnswerLog(currentScenario, result)]);
   }
 
-  function goNextRound() {
-    if (!lastResult) {
-      return;
-    }
-
-    const nextState = lastResult.nextState;
+  function advanceRound(result: AnswerResult) {
+    const nextState = result.nextState;
     setCombat(nextState);
     setSelectedOptionId(null);
     setLastResult(null);
@@ -192,7 +210,6 @@ function App() {
               selectedOptionId={selectedOptionId}
               result={lastResult}
               onChoose={chooseOption}
-              onNext={goNextRound}
             />
           )}
 
@@ -347,7 +364,6 @@ interface BattleScreenProps {
   selectedOptionId: string | null;
   result: AnswerResult | null;
   onChoose: (optionId: string) => void;
-  onNext: () => void;
 }
 
 function BattleScreen({
@@ -359,7 +375,6 @@ function BattleScreen({
   selectedOptionId,
   result,
   onChoose,
-  onNext,
 }: BattleScreenProps) {
   const correctOption = scenario.responseOptions.find(
     (option) => option.id === scenario.correctOptionId,
@@ -368,13 +383,23 @@ function BattleScreen({
   return (
     <section className="battleLayout">
       <div className="scoreboard">
-        <HpCard label="我方" entity={userEntity} hp={combat.playerHp} />
+        <HpCard
+          label="我方"
+          entity={userEntity}
+          hp={combat.playerHp}
+          damage={result?.playerDamage ?? 0}
+        />
         <div className="roundBadge">
           <span>Round</span>
           <strong>{roundNumber}/8</strong>
           <small>Combo x{combat.combo}</small>
         </div>
-        <HpCard label="敌方" entity={enemyEntity} hp={combat.enemyHp} />
+        <HpCard
+          label="敌方"
+          entity={enemyEntity}
+          hp={combat.enemyHp}
+          damage={result?.enemyDamage ?? 0}
+        />
       </div>
 
       <div className="battlePanel courtPanel">
@@ -437,9 +462,9 @@ function BattleScreen({
               <span>敌方扣血：{result.enemyDamage}</span>
               <span>我方扣血：{result.playerDamage}</span>
             </div>
-            <button className="primaryAction compact" onClick={onNext}>
-              {result.nextState.isFinished ? "查看结算" : "下一回合"}
-            </button>
+            <div className="autoAdvanceNote" aria-live="polite">
+              {result.nextState.isFinished ? "进入结算中..." : "自动推进中..."}
+            </div>
           </div>
         )}
       </div>
@@ -447,9 +472,19 @@ function BattleScreen({
   );
 }
 
-function HpCard({ label, entity, hp }: { label: string; entity: Entity; hp: number }) {
+function HpCard({
+  label,
+  entity,
+  hp,
+  damage,
+}: {
+  label: string;
+  entity: Entity;
+  hp: number;
+  damage: number;
+}) {
   return (
-    <div className="hpCard">
+    <div className={`hpCard ${damage > 0 ? "takingDamage" : ""}`}>
       <div>
         <span>{label}</span>
         <strong>{entity.shortLabel}</strong>
@@ -458,6 +493,7 @@ function HpCard({ label, entity, hp }: { label: string; entity: Entity; hp: numb
         <span style={{ width: `${hp}%`, backgroundColor: entity.color }} />
       </div>
       <b>{hp} HP</b>
+      {damage > 0 && <em className="damageFloat">-{damage}</em>}
     </div>
   );
 }

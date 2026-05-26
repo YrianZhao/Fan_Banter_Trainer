@@ -7,6 +7,7 @@
 - 内容边界：以公开篮球事实、比赛表现、季后赛失利、转会争议、伤病争议、判罚争议、荣誉比较、球迷 meme 等吐槽为主；可以使用公开且可来源化的场外争议素材，但避免人身威胁、仇恨言论、人肉信息、无来源严重指控和不可验证的私生活传闻。
 - 移动端是核心使用场景；修改 UI 后需要检查小屏布局，避免横向滚动、按钮文字溢出和选项不可点击。
 - 游戏回复选项按钮应显示简短、像真实对喷会说出口的句子；训练说明、有效性分析和上下文解释放在选择后的 `explanation` 中。
+- 对战结算选择后应自动扣血并进入下一回合或结算页，不使用手动“下一回合”按钮；HP 变化需要有清晰动画反馈。
 - 常用命令：`npm install`、`npm run dev`、`npm test`、`npm run build`、`npm run preview`。
 - GitHub 仓库：`https://github.com/YrianZhao/Fan_Banter_Trainer`。
 - 线上地址：`https://yrianzhao.github.io/Fan_Banter_Trainer/`。
