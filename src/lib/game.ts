@@ -7,7 +7,9 @@ import type {
   ControversyTopic,
   Entity,
   ResponseOption,
+  RoundPrompt,
   RoundScenario,
+  TurnStep,
   TopicCategory,
   ValidationResult,
 } from "../types";
@@ -81,26 +83,31 @@ export function buildRoundScenarios(
 export function applyResponse(
   state: CombatState,
   scenario: RoundScenario,
+  step: TurnStep,
   selectedOptionId: string,
 ): AnswerResult {
-  const option = scenario.responseOptions.find((candidate) => candidate.id === selectedOptionId);
+  const prompt = step === "defense" ? scenario.defense : scenario.offense;
+  const option = prompt.responseOptions.find((candidate) => candidate.id === selectedOptionId);
 
   if (!option) {
     throw new Error(`Unknown response option: ${selectedOptionId}`);
   }
 
-  const isCorrect = option.id === scenario.correctOptionId;
+  const isCorrect = option.id === prompt.correctOptionId;
   const combo = isCorrect ? state.combo + 1 : 0;
   const comboBonus = isCorrect ? Math.min(8, Math.max(0, state.combo) * 2) : 0;
   const unsupportedPenalty = !isCorrect && option.responseType === "unsupported_claim" ? 5 : 0;
-  const enemyDamage = isCorrect ? option.damage + comboBonus : 0;
+  const defenseBlockDamage = step === "defense" && isCorrect ? Math.max(4, Math.floor(option.damage * 0.28)) : 0;
+  const offenseDamage = step === "offense" && isCorrect ? option.damage + comboBonus : 0;
+  const enemyDamage = defenseBlockDamage + offenseDamage;
   const playerDamage = isCorrect ? 0 : option.selfDamageIfWrong + unsupportedPenalty;
   const enemyHp = clampHp(state.enemyHp - enemyDamage);
   const playerHp = clampHp(state.playerHp - playerDamage);
-  const roundIndex = state.roundIndex + 1;
+  const roundIndex = step === "offense" ? state.roundIndex + 1 : state.roundIndex;
 
   return {
     option,
+    step,
     isCorrect,
     playerDamage,
     enemyDamage,
@@ -109,7 +116,7 @@ export function applyResponse(
       enemyHp,
       combo,
       roundIndex,
-      isFinished: playerHp <= 0 || enemyHp <= 0 || roundIndex >= MAX_ROUNDS,
+      isFinished: playerHp <= 0 || enemyHp <= 0 || (step === "offense" && roundIndex >= MAX_ROUNDS),
     },
   };
 }
@@ -118,14 +125,14 @@ export function makeAnswerLog(
   scenario: RoundScenario,
   result: AnswerResult,
 ): AnswerLog {
-  const correctOption = scenario.responseOptions.find(
-    (option) => option.id === scenario.correctOptionId,
-  );
+  const prompt = result.step === "defense" ? scenario.defense : scenario.offense;
+  const correctOption = prompt.responseOptions.find((option) => option.id === prompt.correctOptionId);
 
   return {
-    roundId: scenario.id,
-    topicTitle: scenario.topic.title,
-    attackText: scenario.attackLine.text,
+    roundId: `${scenario.id}-${result.step}`,
+    step: result.step,
+    topicTitle: prompt.topic.title,
+    attackText: prompt.attackLine.text,
     selectedText: result.option.text,
     correctText: correctOption?.text ?? "",
     explanation: result.option.explanation,
@@ -281,19 +288,42 @@ function createScenario(
   enemySide: string,
   index: number,
 ): RoundScenario | null {
-  const topic = getTopic(dataset, sourceLine.controversyTopicId);
-  const target = getEntity(dataset, sourceLine.defenderTargetId);
-  const enemy = getEntity(dataset, enemySide);
+  const defensePrompt = createPrompt(dataset, sourceLine, enemySide);
+  const offenseSourceLine = pickOffenseLine(dataset, enemySide, index);
+  const offensePrompt = offenseSourceLine ? createPrompt(dataset, offenseSourceLine, userSide) : null;
 
-  if (!topic || !target || !enemy) {
+  if (!defensePrompt || !offensePrompt) {
     return null;
   }
 
-  const attackLine = personalizeAttackLine(sourceLine, target, enemy);
+  return {
+    id: `${sourceLine.id}-round-${index}`,
+    userSide,
+    enemySide,
+    defense: defensePrompt,
+    offense: offensePrompt,
+    difficulty: Math.max(defensePrompt.topic.severity, offensePrompt.topic.severity) as 1 | 2 | 3 | 4 | 5,
+  };
+}
+
+function createPrompt(
+  dataset: BanterDataset,
+  sourceLine: AttackLine,
+  attackerSide: string,
+): RoundPrompt | null {
+  const topic = getTopic(dataset, sourceLine.controversyTopicId);
+  const target = getEntity(dataset, sourceLine.defenderTargetId);
+  const attacker = getEntity(dataset, attackerSide);
+
+  if (!topic || !target || !attacker) {
+    return null;
+  }
+
+  const attackLine = personalizeAttackLine(sourceLine, target, attacker);
   const responseOptions = shuffle(
     dataset.responseOptions
       .filter((option) => option.attackLineId === sourceLine.id)
-      .map((option) => personalizeResponseOption(option, target, enemy)),
+      .map((option) => personalizeResponseOption(option, target, attacker)),
   );
   const correct = responseOptions.find((option) => option.isCorrect);
 
@@ -302,15 +332,38 @@ function createScenario(
   }
 
   return {
-    id: `${sourceLine.id}-round-${index}`,
-    userSide,
-    enemySide,
+    topic,
     attackLine,
     responseOptions,
     correctOptionId: correct.id,
-    difficulty: topic.severity,
-    topic,
   };
+}
+
+function pickOffenseLine(
+  dataset: BanterDataset,
+  enemySide: string,
+  index: number,
+): AttackLine | undefined {
+  const directLines = dataset.attackLines.filter((line) => line.defenderTargetId === enemySide);
+  if (directLines.length > 0) {
+    return directLines[index % directLines.length];
+  }
+
+  const enemyEntity = getEntity(dataset, enemySide);
+  if (!enemyEntity) {
+    return undefined;
+  }
+
+  const fallbackLines = dataset.attackLines.filter((line) => {
+    const defender = getEntity(dataset, line.defenderTargetId);
+    return Boolean(
+      defender &&
+        (defender.type === enemyEntity.type ||
+          defender.tags.some((tag) => enemyEntity.tags.includes(tag))),
+    );
+  });
+
+  return fallbackLines[index % fallbackLines.length];
 }
 
 function personalizeAttackLine(line: AttackLine, target: Entity, enemy: Entity): AttackLine {

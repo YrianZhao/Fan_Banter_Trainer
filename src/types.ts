@@ -78,11 +78,16 @@ export interface RoundScenario {
   id: string;
   userSide: string;
   enemySide: string;
+  defense: RoundPrompt;
+  offense: RoundPrompt;
+  difficulty: 1 | 2 | 3 | 4 | 5;
+}
+
+export interface RoundPrompt {
+  topic: ControversyTopic;
   attackLine: AttackLine;
   responseOptions: ResponseOption[];
   correctOptionId: string;
-  difficulty: 1 | 2 | 3 | 4 | 5;
-  topic: ControversyTopic;
 }
 
 export interface BanterDataset {
@@ -106,14 +111,18 @@ export interface CombatState {
 
 export interface AnswerResult {
   option: ResponseOption;
+  step: TurnStep;
   isCorrect: boolean;
   playerDamage: number;
   enemyDamage: number;
   nextState: CombatState;
 }
 
+export type TurnStep = "defense" | "offense";
+
 export interface AnswerLog {
   roundId: string;
+  step: TurnStep;
   topicTitle: string;
   attackText: string;
   selectedText: string;

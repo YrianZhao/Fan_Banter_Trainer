@@ -10,6 +10,7 @@ import {
   Trash2,
   Upload,
   XCircle,
+  Users,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, Dispatch, SetStateAction } from "react";
@@ -38,6 +39,7 @@ import type {
   RoundScenario,
   TopicCategory,
   TopicFactuality,
+  TurnStep,
 } from "./types";
 
 const STORAGE_KEY = "fan-banter-trainer-dataset";
@@ -78,6 +80,7 @@ function App() {
   const [enemySide, setEnemySide] = useState(dataset.entities[1]?.id ?? "");
   const [rounds, setRounds] = useState<RoundScenario[]>([]);
   const [combat, setCombat] = useState<CombatState>(() => createInitialCombatState());
+  const [turnStep, setTurnStep] = useState<TurnStep>("defense");
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<AnswerResult | null>(null);
   const [answerLogs, setAnswerLogs] = useState<AnswerLog[]>([]);
@@ -113,8 +116,8 @@ function App() {
     }
 
     advanceTimerRef.current = window.setTimeout(() => {
-      advanceRound(lastResult);
-    }, lastResult.nextState.isFinished ? 1600 : 2200);
+      advanceBattle(lastResult);
+    }, lastResult.nextState.isFinished ? 1600 : lastResult.step === "defense" ? 1800 : 2200);
 
     return () => {
       if (advanceTimerRef.current) {
@@ -129,6 +132,7 @@ function App() {
 
     setRounds(nextRounds);
     setCombat(createInitialCombatState());
+    setTurnStep("defense");
     setSelectedOptionId(null);
     setLastResult(null);
     setAnswerLogs([]);
@@ -140,13 +144,13 @@ function App() {
       return;
     }
 
-    const result = applyResponse(combat, currentScenario, optionId);
+    const result = applyResponse(combat, currentScenario, turnStep, optionId);
     setSelectedOptionId(optionId);
     setLastResult(result);
     setAnswerLogs((logs) => [...logs, makeAnswerLog(currentScenario, result)]);
   }
 
-  function advanceRound(result: AnswerResult) {
+  function advanceBattle(result: AnswerResult) {
     const nextState = result.nextState;
     setCombat(nextState);
     setSelectedOptionId(null);
@@ -154,13 +158,22 @@ function App() {
 
     if (nextState.isFinished || !rounds[nextState.roundIndex]) {
       setPhase("result");
+      return;
     }
+
+    if (result.step === "defense") {
+      setTurnStep("offense");
+      return;
+    }
+
+    setTurnStep("defense");
   }
 
   function resetGame() {
     setPhase("setup");
     setRounds([]);
     setCombat(createInitialCombatState());
+    setTurnStep("defense");
     setSelectedOptionId(null);
     setLastResult(null);
     setAnswerLogs([]);
@@ -205,6 +218,7 @@ function App() {
               userEntity={userEntity}
               enemyEntity={enemyEntity}
               scenario={currentScenario}
+              turnStep={turnStep}
               combat={displayedCombat}
               roundNumber={combat.roundIndex + 1}
               selectedOptionId={selectedOptionId}
@@ -291,7 +305,7 @@ function SetupScreen({
           <h2>{dataset.topics.length} 个争议 topic</h2>
           <p>
             {dataset.attackLines.length} 条攻击线，{dataset.responseOptions.length} 个回复选项。
-            每回合敌方先开火，你需要选出最贴合上下文的一句。
+            每回合先防守反驳，再主动选择攻击话术。
           </p>
         </div>
         {validationErrors.length > 0 && (
@@ -310,6 +324,20 @@ function SetupScreen({
           <Swords size={20} />
           开始对喷训练
         </button>
+        <div className="roomPanel">
+          <div>
+            <strong>房间对战</strong>
+            <span>GitHub Pages 静态版暂未接入实时同步。</span>
+          </div>
+          <label>
+            房间号
+            <input disabled placeholder="接入实时后端后可输入" />
+          </label>
+          <button className="secondaryAction" disabled title="需要 Supabase/Firebase 等实时后端">
+            <Users size={16} />
+            加入 1v1
+          </button>
+        </div>
       </div>
     </section>
   );
@@ -359,6 +387,7 @@ interface BattleScreenProps {
   userEntity: Entity;
   enemyEntity: Entity;
   scenario: RoundScenario;
+  turnStep: TurnStep;
   combat: CombatState;
   roundNumber: number;
   selectedOptionId: string | null;
@@ -370,15 +399,21 @@ function BattleScreen({
   userEntity,
   enemyEntity,
   scenario,
+  turnStep,
   combat,
   roundNumber,
   selectedOptionId,
   result,
   onChoose,
 }: BattleScreenProps) {
-  const correctOption = scenario.responseOptions.find(
-    (option) => option.id === scenario.correctOptionId,
-  );
+  const prompt = turnStep === "defense" ? scenario.defense : scenario.offense;
+  const correctOption = prompt.responseOptions.find((option) => option.id === prompt.correctOptionId);
+  const activeEntity = turnStep === "defense" ? enemyEntity : userEntity;
+  const phaseTitle = turnStep === "defense" ? "先反驳对方攻击" : "轮到你主动攻击";
+  const phaseHelp =
+    turnStep === "defense"
+      ? "选一句最贴合对方攻击的反驳，挡住节奏。"
+      : "选一句真正打到对方阵营痛点的攻击；错位攻击会扣自己血。";
 
   return (
     <section className="battleLayout">
@@ -392,7 +427,7 @@ function BattleScreen({
         <div className="roundBadge">
           <span>Round</span>
           <strong>{roundNumber}/8</strong>
-          <small>Combo x{combat.combo}</small>
+          <small>{turnStep === "defense" ? "防守" : "进攻"} · Combo x{combat.combo}</small>
         </div>
         <HpCard
           label="敌方"
@@ -404,25 +439,27 @@ function BattleScreen({
 
       <div className="battlePanel courtPanel">
         <div className="topicRow">
-          <span>{categoryLabels[scenario.topic.category]}</span>
-          <span>难度 {scenario.difficulty}</span>
-          <span>{scenario.topic.factuality}</span>
+          <span>{turnStep === "defense" ? "阶段 1/2" : "阶段 2/2"}</span>
+          <span>{categoryLabels[prompt.topic.category]}</span>
+          <span>难度 {prompt.topic.severity}</span>
+          <span>{prompt.topic.factuality}</span>
         </div>
         <div className="attackBubble">
-          <div className="avatar" style={{ backgroundColor: enemyEntity.color }}>
-            {enemyEntity.shortLabel.slice(0, 2)}
+          <div className="avatar" style={{ backgroundColor: activeEntity.color }}>
+            {activeEntity.shortLabel.slice(0, 2)}
           </div>
           <div>
-            <p className="eyebrow">敌方先手攻击</p>
-            <h2>{scenario.topic.title}</h2>
-            <p>{scenario.attackLine.text}</p>
+            <p className="eyebrow">{phaseTitle}</p>
+            <h2>{prompt.topic.title}</h2>
+            <p>{prompt.attackLine.text}</p>
+            <small>{phaseHelp}</small>
           </div>
         </div>
 
         <div className="optionsGrid">
-          {scenario.responseOptions.map((option) => {
+          {prompt.responseOptions.map((option) => {
             const isSelected = selectedOptionId === option.id;
-            const showCorrect = selectedOptionId && option.id === scenario.correctOptionId;
+            const showCorrect = selectedOptionId && option.id === prompt.correctOptionId;
             const showWrong = isSelected && !option.isCorrect;
 
             return (
@@ -438,7 +475,11 @@ function BattleScreen({
                 {selectedOptionId && (
                   <small>
                     {responseTypeLabels[option.responseType]} ·{" "}
-                    {option.isCorrect ? `伤害 ${result?.enemyDamage ?? option.damage}` : "无效"}
+                    {option.isCorrect
+                      ? turnStep === "defense"
+                        ? `压制 ${result?.enemyDamage ?? 0}`
+                        : `伤害 ${result?.enemyDamage ?? option.damage}`
+                      : "无效"}
                   </small>
                 )}
               </button>
@@ -450,9 +491,23 @@ function BattleScreen({
           <div className={`feedbackBox ${result.isCorrect ? "success" : "failure"}`}>
             <div className="feedbackTitle">
               {result.isCorrect ? <CheckCircle2 size={20} /> : <XCircle size={20} />}
-              <strong>{result.isCorrect ? "命中上下文" : "这句会被反打"}</strong>
+              <strong>
+                {result.isCorrect
+                  ? turnStep === "defense"
+                    ? "反驳成立"
+                    : "攻击命中"
+                  : turnStep === "defense"
+                    ? "反驳失位"
+                    : "攻击错位"}
+              </strong>
             </div>
             <p>{result.option.explanation}</p>
+            {turnStep === "offense" && result.isCorrect && (
+              <p>
+                <strong>机器人回应：</strong>
+                回应成立，但这波已经被你打到痛点，只能进入下一轮。
+              </p>
+            )}
             {!result.isCorrect && (
               <p>
                 最佳思路：<strong>{correctOption.text}</strong>
@@ -463,7 +518,11 @@ function BattleScreen({
               <span>我方扣血：{result.playerDamage}</span>
             </div>
             <div className="autoAdvanceNote" aria-live="polite">
-              {result.nextState.isFinished ? "进入结算中..." : "自动推进中..."}
+              {result.nextState.isFinished
+                ? "进入结算中..."
+                : turnStep === "defense"
+                  ? "轮到你攻击..."
+                  : "自动推进中..."}
             </div>
           </div>
         )}

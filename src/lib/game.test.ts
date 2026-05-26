@@ -53,28 +53,43 @@ describe("dataset integrity", () => {
 });
 
 describe("combat rules", () => {
-  it("damages the enemy when the selected response is correct", () => {
+  it("keeps the same round after a correct rebuttal and applies only pressure damage", () => {
     const [scenario] = buildRoundScenarios(defaultDataset, "player-lebron", "player-curry", 1);
     const state = createInitialCombatState();
-    const result = applyResponse(state, scenario, scenario.correctOptionId);
+    const result = applyResponse(state, scenario, "defense", scenario.defense.correctOptionId);
 
     expect(result.isCorrect).toBe(true);
     expect(result.enemyDamage).toBeGreaterThan(0);
+    expect(result.enemyDamage).toBeLessThan(12);
+    expect(result.nextState.roundIndex).toBe(state.roundIndex);
     expect(result.nextState.enemyHp).toBeLessThan(state.enemyHp);
     expect(result.nextState.playerHp).toBe(state.playerHp);
   });
 
-  it("damages the player when the selected response is wrong", () => {
+  it("damages the enemy and advances the round when the selected attack is correct", () => {
     const [scenario] = buildRoundScenarios(defaultDataset, "player-lebron", "player-curry", 1);
-    const wrongOption = scenario.responseOptions.find((option) => !option.isCorrect);
+    const state = createInitialCombatState();
+    const result = applyResponse(state, scenario, "offense", scenario.offense.correctOptionId);
+
+    expect(result.isCorrect).toBe(true);
+    expect(result.enemyDamage).toBeGreaterThan(10);
+    expect(result.nextState.roundIndex).toBe(state.roundIndex + 1);
+    expect(result.nextState.enemyHp).toBeLessThan(state.enemyHp);
+    expect(result.nextState.playerHp).toBe(state.playerHp);
+  });
+
+  it("damages the player when the selected attack is wrong or mismatched", () => {
+    const [scenario] = buildRoundScenarios(defaultDataset, "player-lebron", "player-curry", 1);
+    const wrongOption = scenario.offense.responseOptions.find((option) => !option.isCorrect);
     const state = createInitialCombatState();
 
     expect(wrongOption).toBeDefined();
 
-    const result = applyResponse(state, scenario, wrongOption!.id);
+    const result = applyResponse(state, scenario, "offense", wrongOption!.id);
 
     expect(result.isCorrect).toBe(false);
     expect(result.playerDamage).toBeGreaterThan(0);
+    expect(result.nextState.roundIndex).toBe(state.roundIndex + 1);
     expect(result.nextState.playerHp).toBeLessThan(state.playerHp);
     expect(result.nextState.enemyHp).toBe(state.enemyHp);
   });
@@ -84,8 +99,15 @@ describe("combat rules", () => {
     let state = createInitialCombatState();
 
     for (const scenario of rounds) {
-      const result = applyResponse(state, scenario, scenario.correctOptionId);
-      state = result.nextState;
+      const defenseResult = applyResponse(state, scenario, "defense", scenario.defense.correctOptionId);
+      state = defenseResult.nextState;
+
+      if (state.isFinished) {
+        break;
+      }
+
+      const offenseResult = applyResponse(state, scenario, "offense", scenario.offense.correctOptionId);
+      state = offenseResult.nextState;
 
       if (state.isFinished) {
         break;

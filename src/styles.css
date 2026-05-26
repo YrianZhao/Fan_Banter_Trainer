@@ -202,6 +202,26 @@ button:disabled {
   padding: 20px;
 }
 
+.roomPanel {
+  display: grid;
+  gap: 10px;
+  min-width: min(280px, 100%);
+  padding: 12px;
+  border: 1px dashed #c4cbbb;
+  border-radius: 8px;
+  background: #fbfcf7;
+}
+
+.roomPanel div {
+  display: grid;
+  gap: 2px;
+}
+
+.roomPanel span {
+  color: #667085;
+  font-size: 0.9rem;
+}
+
 .startPanel p,
 .adminIntro p,
 .battlePanel p,
@@ -380,6 +400,13 @@ button:disabled {
   border: 1px solid #d7d9ce;
   border-radius: 8px;
   background: #fbfcf7;
+}
+
+.attackBubble small {
+  display: block;
+  margin-top: 8px;
+  color: #667085;
+  font-weight: 800;
 }
 
 .avatar {
