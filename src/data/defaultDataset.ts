@@ -450,10 +450,10 @@ function buildDataset(): BanterDataset {
           {
             id: `${attackLineId}-option-correct`,
             attackLineId,
-            text: `先接住事实：${topicPlan.correctFrame}。然后把话题拉回上下文，要求{enemy}那边也用同一标准看自己的失败样本。`,
+            text: topicPlan.correctFrame,
             isCorrect: true,
             responseType: "rebuttal_then_counterattack",
-            explanation: `有效，因为它没有硬洗{target}的争议，而是先承认事实，再用上下文和同一标准完成反击。`,
+            explanation: `有效，因为它没有硬洗{target}的争议，而是先承认事实，再用上下文和同一标准完成反击。可以继续追问{enemy}那边是否也愿意用同样标准看自己的失败样本。`,
             damage: 12 + topicPlan.severity * 2 + (topicIndex % 2),
             selfDamageIfWrong: 0,
             requiredKnowledgeTags: topicPlan.requiredKnowledgeTags,
@@ -461,7 +461,7 @@ function buildDataset(): BanterDataset {
           {
             id: `${attackLineId}-option-wrong-context`,
             attackLineId,
-            text: `别扯这些，{target}人气高、粉丝多，所以{enemy}球迷说什么都没用。`,
+            text: `{target}人气高，{enemy}球迷说什么都没用。`,
             isCorrect: false,
             responseType: "wrong_context",
             explanation: `无效，因为人气不能回应这次攻击里的具体事实，属于从争议内容跳到无关话题。`,
@@ -472,7 +472,7 @@ function buildDataset(): BanterDataset {
           {
             id: `${attackLineId}-option-unsupported`,
             attackLineId,
-            text: `直接说{enemy}那边所有荣誉都靠剧本和运气，先把气势压回去。`,
+            text: `{enemy}那边所有荣誉都靠剧本和运气。`,
             isCorrect: false,
             responseType: "unsupported_claim",
             explanation: `无效，而且会额外扣血。这个说法没有证据，还把讨论推向无法证明的阴谋论。`,
@@ -483,7 +483,7 @@ function buildDataset(): BanterDataset {
           {
             id: `${attackLineId}-option-weak`,
             attackLineId,
-            text: `只回一句“你懂球吗”，不要展开，靠语气把对面压住。`,
+            text: "你懂球吗？",
             isCorrect: false,
             responseType: "weak_deflection",
             explanation: `无效，语气强但没有论据，不能训练事实准确度，也不能贴合当前攻击。`,
@@ -497,7 +497,7 @@ function buildDataset(): BanterDataset {
   });
 
   return {
-    version: "0.2.0",
+    version: "0.2.1",
     updatedAt: "2026-05-26",
     entities,
     topics,

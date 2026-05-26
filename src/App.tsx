@@ -1053,6 +1053,9 @@ function loadDataset(): BanterDataset {
   try {
     const parsed = JSON.parse(raw) as BanterDataset;
     assertDatasetShape(parsed);
+    if (parsed.version !== defaultDataset.version) {
+      return defaultDataset;
+    }
     return parsed;
   } catch {
     return defaultDataset;
