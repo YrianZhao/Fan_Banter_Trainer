@@ -32,6 +32,8 @@ textarea {
 
 button {
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 button:disabled {
@@ -555,6 +557,10 @@ button:disabled {
   gap: 18px;
 }
 
+.mobileMemoryTop {
+  display: none;
+}
+
 .memoryIntro {
   display: flex;
   justify-content: space-between;
@@ -600,6 +606,31 @@ button:disabled {
   grid-template-columns: 280px minmax(0, 1fr) 300px;
   gap: 18px;
   align-items: start;
+}
+
+.memoryCard {
+  position: relative;
+  overflow: hidden;
+  animation: cardEnter 360ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.memoryCard::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(
+      circle at 18% 0%,
+      color-mix(in srgb, var(--active-team-color) 18%, transparent),
+      transparent 34%
+    ),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+
+.memoryCard > * {
+  position: relative;
 }
 
 .filterList {
@@ -701,7 +732,7 @@ button:disabled {
   border: 1px solid #d7d9ce;
   border-radius: 8px;
   background:
-    linear-gradient(135deg, rgba(15, 111, 92, 0.12), transparent 44%),
+    linear-gradient(135deg, color-mix(in srgb, var(--active-team-color) 14%, transparent), transparent 44%),
     #fbfcf7;
 }
 
@@ -720,12 +751,14 @@ button:disabled {
 .revealAction {
   width: 100%;
   margin-top: 16px;
+  box-shadow: 0 12px 26px color-mix(in srgb, var(--active-team-color) 24%, transparent);
 }
 
 .memoryAnswer {
   display: grid;
   gap: 12px;
   margin-top: 16px;
+  animation: answerReveal 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .memoryAnswer div {
@@ -751,12 +784,12 @@ button:disabled {
 }
 
 .memoryAnswer div:nth-child(2) {
-  border-color: #c5d9d1;
-  background: #e9f7f1;
+  border-color: color-mix(in srgb, var(--active-team-color) 28%, #c5d9d1);
+  background: color-mix(in srgb, var(--active-team-color) 10%, #e9f7f1);
 }
 
 .memoryAnswer div:nth-child(2) p {
-  color: #0f5f50;
+  color: color-mix(in srgb, var(--active-team-color) 70%, #0f5f50);
   font-size: 1.15rem;
   font-weight: 900;
 }
@@ -778,6 +811,18 @@ button:disabled {
   background: #ffffff;
   color: #17202a;
   text-align: left;
+  transition:
+    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+}
+
+.ratingButton:active,
+.primaryAction:active,
+.teamDeckButton:active,
+.mobileTeamChip:active,
+.filterChip:active {
+  transform: scale(0.98);
 }
 
 .ratingButton strong {
@@ -1048,15 +1093,113 @@ textarea {
 
 @media (max-width: 860px) {
   .appShell {
-    padding: 16px;
+    padding: 12px 12px calc(118px + env(safe-area-inset-bottom));
   }
 
   .topBar,
   .startPanel,
-  .memoryIntro,
   .adminIntro {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .memoryLayout {
+    gap: 12px;
+  }
+
+  .memoryIntro {
+    display: none;
+  }
+
+  .mobileMemoryTop {
+    display: grid;
+    gap: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    margin: -2px -12px 0;
+    padding: 10px 12px 12px;
+    background: rgba(243, 245, 240, 0.86);
+    backdrop-filter: blur(18px) saturate(1.35);
+    border-bottom: 1px solid rgba(207, 211, 195, 0.72);
+  }
+
+  .mobileTeamRail {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 2px 12px 4px 0;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .mobileTeamRail::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobileTeamChip {
+    display: inline-grid;
+    grid-template-columns: auto auto;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    min-height: 42px;
+    padding: 8px 12px;
+    border: 1px solid #d9dccf;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.82);
+    color: #17202a;
+    font-weight: 950;
+    scroll-snap-align: start;
+    box-shadow: 0 8px 18px rgba(23, 32, 42, 0.06);
+  }
+
+  .mobileTeamChip small {
+    color: #667085;
+    font-weight: 850;
+  }
+
+  .mobileTeamChip.active {
+    border-color: var(--team-color);
+    background: color-mix(in srgb, var(--team-color) 13%, white);
+    color: color-mix(in srgb, var(--team-color) 72%, #17202a);
+  }
+
+  .mobileMemoryStats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .mobileMemoryStats .statPill {
+    min-height: 54px;
+    padding: 8px;
+    box-shadow: none;
+  }
+
+  .mobileMemoryStats .statPill strong {
+    font-size: 1.25rem;
+  }
+
+  .mobileCategorySelect {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border: 1px solid #d9dccf;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.84);
+    color: #667085;
+    font-size: 0.88rem;
+  }
+
+  .mobileCategorySelect select {
+    min-height: 36px;
+    border: 0;
+    background: transparent;
+    font-weight: 900;
+    text-align: right;
   }
 
   .viewSwitch {
@@ -1071,7 +1214,6 @@ textarea {
   .summaryGrid,
   .scoreGrid,
   .memoryStats,
-  .ratingGrid,
   .formGrid,
   .scoreboard {
     grid-template-columns: 1fr;
@@ -1089,13 +1231,117 @@ textarea {
     grid-template-columns: 1fr;
   }
 
+  .memoryGrid {
+    display: block;
+  }
+
+  .memorySidebar,
+  .memoryValidation {
+    display: none;
+  }
+
+  .memoryCard.courtPanel {
+    min-height: calc(100svh - 270px);
+    padding: 14px;
+    border-radius: 22px;
+    box-shadow:
+      0 20px 50px rgba(23, 32, 42, 0.14),
+      0 1px 0 rgba(255, 255, 255, 0.9) inset;
+  }
+
+  .memoryCard .topicRow {
+    margin-bottom: 12px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .memoryCard .topicRow::-webkit-scrollbar {
+    display: none;
+  }
+
+  .topicRow span {
+    flex: 0 0 auto;
+    border-radius: 999px;
+  }
+
   .memoryQuestion {
-    min-height: 180px;
-    padding: 16px;
+    min-height: 44svh;
+    align-content: center;
+    padding: 22px 18px;
+    border-radius: 20px;
+    text-align: left;
   }
 
   .memoryQuestion h2 {
-    font-size: 1.75rem;
+    font-size: clamp(2rem, 9vw, 3.15rem);
+    line-height: 1.04;
+  }
+
+  .memoryQuestion small {
+    font-size: 0.95rem;
+  }
+
+  .revealAction {
+    position: sticky;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    z-index: 4;
+    min-height: 58px;
+    border-radius: 18px;
+    font-size: 1.02rem;
+  }
+
+  .memoryAnswer {
+    gap: 10px;
+  }
+
+  .memoryAnswer div {
+    border-radius: 18px;
+    padding: 14px;
+  }
+
+  .memoryAnswer div:nth-child(2) p {
+    font-size: 1.08rem;
+  }
+
+  .ratingGrid {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 8;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+    border-top: 1px solid rgba(207, 211, 195, 0.75);
+    background: rgba(243, 245, 240, 0.88);
+    backdrop-filter: blur(18px) saturate(1.35);
+  }
+
+  .ratingButton {
+    min-height: 72px;
+    justify-content: center;
+    border-radius: 18px;
+    padding: 10px 8px;
+    text-align: center;
+    box-shadow: 0 8px 18px rgba(23, 32, 42, 0.08);
+  }
+
+  .ratingButton strong {
+    font-size: 1.05rem;
+  }
+
+  .ratingButton span {
+    font-size: 0.78rem;
+    line-height: 1.2;
+  }
+
+  .sourcePanel {
+    margin-bottom: 8px;
+    border-radius: 18px;
   }
 }
 
@@ -1126,5 +1372,37 @@ textarea {
   100% {
     opacity: 0;
     transform: translateY(-28px) scale(1.08);
+  }
+}
+
+@keyframes cardEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes answerReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
   }
 }

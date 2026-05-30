@@ -17,7 +17,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, Dispatch, SetStateAction } from "react";
 import { memoryTeams } from "./data/memoryDecks";
-import type { MemoryCard, MemoryCategory } from "./data/memoryDeckTypes";
+import type { MemoryCard, MemoryCategory, MemoryTeamId } from "./data/memoryDeckTypes";
 import { defaultDataset } from "./data/defaultDataset";
 import {
   applyResponse,
@@ -662,6 +662,7 @@ function MemoryTrainingScreen() {
   const [progress, setProgress] = useState<MemoryProgressState>(() => loadMemoryProgress());
   const [selectedTeamId, setSelectedTeamId] = useState(memoryTeams[0].id);
   const [categoryFilter, setCategoryFilter] = useState<MemoryCategory | "all">("all");
+  const [cardAnimationKey, setCardAnimationKey] = useState(0);
   const selectedTeam = memoryTeams.find((team) => team.id === selectedTeamId) ?? memoryTeams[0];
   const currentDeck = selectedTeam.deck;
   const [currentCard, setCurrentCard] = useState<MemoryCard | undefined>(() =>
@@ -711,6 +712,18 @@ function MemoryTrainingScreen() {
     setIsRevealed(true);
   }
 
+  function selectTeam(teamId: MemoryTeamId) {
+    setSelectedTeamId(teamId);
+    setCategoryFilter("all");
+    setSessionRatings([]);
+    setCardAnimationKey((key) => key + 1);
+  }
+
+  function selectCategory(category: MemoryCategory | "all") {
+    setCategoryFilter(category);
+    setCardAnimationKey((key) => key + 1);
+  }
+
   function rateCard(rating: MemoryRating) {
     if (!currentCard) {
       return;
@@ -719,6 +732,7 @@ function MemoryTrainingScreen() {
     const nextProgress = rateMemoryCard(progress, currentCard.id, rating);
     setProgress(nextProgress);
     setSessionRatings((ratings) => [...ratings, rating]);
+    setCardAnimationKey((key) => key + 1);
   }
 
   function resetMemoryProgress() {
@@ -728,7 +742,7 @@ function MemoryTrainingScreen() {
   }
 
   return (
-    <main className="memoryLayout">
+    <main className="memoryLayout" style={{ "--active-team-color": selectedTeam.color } as CSSProperties}>
       <section className="memoryIntro courtPanel">
         <div>
           <p className="eyebrow">球队专项黑料记忆</p>
@@ -746,6 +760,42 @@ function MemoryTrainingScreen() {
         </div>
       </section>
 
+      <section className="mobileMemoryTop" aria-label="移动端记忆训练快捷选择">
+        <div className="mobileTeamRail">
+          {memoryTeams.map((team) => (
+            <button
+              key={team.id}
+              className={team.id === selectedTeam.id ? "mobileTeamChip active" : "mobileTeamChip"}
+              style={{ "--team-color": team.color } as CSSProperties}
+              onClick={() => selectTeam(team.id)}
+            >
+              <span>{team.shortLabel}</span>
+              <small>{team.deck.length}</small>
+            </button>
+          ))}
+        </div>
+        <div className="mobileMemoryStats">
+          <StatPill label="待复习" value={stats.due} />
+          <StatPill label="已练" value={stats.studied} />
+          <StatPill label="掌握" value={stats.mastered} />
+        </div>
+        <label className="mobileCategorySelect">
+          训练范围
+          <select
+            value={categoryFilter}
+            onChange={(event) => selectCategory(event.target.value as MemoryCategory | "all")}
+          >
+            <option value="all">全部 {currentDeck.length}</option>
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {getMemoryCategoryLabel(category)}{" "}
+                {currentDeck.filter((card) => card.category === category).length}
+              </option>
+            ))}
+          </select>
+        </label>
+      </section>
+
       <section className="memoryGrid">
         <aside className="memorySidebar courtPanel">
           <div className="panelHeader">
@@ -758,11 +808,7 @@ function MemoryTrainingScreen() {
                 key={team.id}
                 className={team.id === selectedTeam.id ? "teamDeckButton active" : "teamDeckButton"}
                 style={{ "--team-color": team.color } as CSSProperties}
-                onClick={() => {
-                  setSelectedTeamId(team.id);
-                  setCategoryFilter("all");
-                  setSessionRatings([]);
-                }}
+                onClick={() => selectTeam(team.id)}
               >
                 <span>{team.shortLabel}</span>
                 <strong>{team.deck.length} 张</strong>
@@ -776,7 +822,7 @@ function MemoryTrainingScreen() {
           <div className="filterList">
             <button
               className={categoryFilter === "all" ? "filterChip active" : "filterChip"}
-              onClick={() => setCategoryFilter("all")}
+              onClick={() => selectCategory("all")}
             >
               全部
               <span>{currentDeck.length}</span>
@@ -787,7 +833,7 @@ function MemoryTrainingScreen() {
                 <button
                   key={category}
                   className={categoryFilter === category ? "filterChip active" : "filterChip"}
-                  onClick={() => setCategoryFilter(category)}
+                  onClick={() => selectCategory(category)}
                 >
                   {getMemoryCategoryLabel(category)}
                   <span>{count}</span>
@@ -813,7 +859,7 @@ function MemoryTrainingScreen() {
           </button>
         </aside>
 
-        <section className="memoryCard courtPanel">
+        <section className="memoryCard courtPanel" key={cardAnimationKey}>
           {currentCard ? (
             <>
               <div className="topicRow">
