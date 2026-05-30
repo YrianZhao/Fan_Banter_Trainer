@@ -16,8 +16,8 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, Dispatch, SetStateAction } from "react";
-import { celticsMemoryDeck } from "./data/celticsMemoryDeck";
-import type { MemoryCard, MemoryCategory } from "./data/celticsMemoryDeck";
+import { memoryTeams } from "./data/memoryDecks";
+import type { MemoryCard, MemoryCategory } from "./data/memoryDeckTypes";
 import { defaultDataset } from "./data/defaultDataset";
 import {
   applyResponse,
@@ -660,25 +660,28 @@ function ScoreMeter({ label, value }: { label: string; value: number }) {
 
 function MemoryTrainingScreen() {
   const [progress, setProgress] = useState<MemoryProgressState>(() => loadMemoryProgress());
+  const [selectedTeamId, setSelectedTeamId] = useState(memoryTeams[0].id);
   const [categoryFilter, setCategoryFilter] = useState<MemoryCategory | "all">("all");
+  const selectedTeam = memoryTeams.find((team) => team.id === selectedTeamId) ?? memoryTeams[0];
+  const currentDeck = selectedTeam.deck;
   const [currentCard, setCurrentCard] = useState<MemoryCard | undefined>(() =>
-    selectNextMemoryCard(celticsMemoryDeck, loadMemoryProgress()),
+    selectNextMemoryCard(memoryTeams[0].deck, loadMemoryProgress()),
   );
   const [isRevealed, setIsRevealed] = useState(false);
   const [sessionRatings, setSessionRatings] = useState<MemoryRating[]>([]);
-  const validation = useMemo(() => validateMemoryDeck(celticsMemoryDeck), []);
-  const stats = useMemo(() => getMemoryStats(celticsMemoryDeck, progress), [progress]);
+  const validation = useMemo(() => validateMemoryDeck(currentDeck), [currentDeck]);
+  const stats = useMemo(() => getMemoryStats(currentDeck, progress), [currentDeck, progress]);
   const categories = useMemo(
     () =>
-      Array.from(new Set(celticsMemoryDeck.map((card) => card.category))).sort((a, b) =>
+      Array.from(new Set(currentDeck.map((card) => card.category))).sort((a, b) =>
         getMemoryCategoryLabel(a).localeCompare(getMemoryCategoryLabel(b), "zh-Hans-CN"),
       ),
-    [],
+    [currentDeck],
   );
   const filteredCount =
     categoryFilter === "all"
-      ? celticsMemoryDeck.length
-      : celticsMemoryDeck.filter((card) => card.category === categoryFilter).length;
+      ? currentDeck.length
+      : currentDeck.filter((card) => card.category === categoryFilter).length;
   const cardProgress = currentCard ? progress.cards[currentCard.id] : undefined;
   const accuracy =
     stats.studied === 0
@@ -694,9 +697,15 @@ function MemoryTrainingScreen() {
   }, [progress]);
 
   useEffect(() => {
-    setCurrentCard(selectNextMemoryCard(celticsMemoryDeck, progress, new Date(), categoryFilter));
+    setCurrentCard(selectNextMemoryCard(currentDeck, progress, new Date(), categoryFilter));
     setIsRevealed(false);
-  }, [categoryFilter, progress]);
+  }, [categoryFilter, currentDeck, progress]);
+
+  useEffect(() => {
+    if (categoryFilter !== "all" && !currentDeck.some((card) => card.category === categoryFilter)) {
+      setCategoryFilter("all");
+    }
+  }, [categoryFilter, currentDeck]);
 
   function revealCard() {
     setIsRevealed(true);
@@ -722,7 +731,7 @@ function MemoryTrainingScreen() {
     <main className="memoryLayout">
       <section className="memoryIntro courtPanel">
         <div>
-          <p className="eyebrow">凯尔特人专项黑料记忆</p>
+          <p className="eyebrow">球队专项黑料记忆</p>
           <h2>像背单词一样背对喷材料</h2>
           <p>
             先看问题，想出事实点和回怼角度，再揭晓答案。论坛梗和传闻型话术会被明确标记，
@@ -740,8 +749,29 @@ function MemoryTrainingScreen() {
       <section className="memoryGrid">
         <aside className="memorySidebar courtPanel">
           <div className="panelHeader">
-            <h2>训练范围</h2>
+            <h2>选择队伍</h2>
             <Brain size={20} />
+          </div>
+          <div className="teamDeckList">
+            {memoryTeams.map((team) => (
+              <button
+                key={team.id}
+                className={team.id === selectedTeam.id ? "teamDeckButton active" : "teamDeckButton"}
+                style={{ "--team-color": team.color } as CSSProperties}
+                onClick={() => {
+                  setSelectedTeamId(team.id);
+                  setCategoryFilter("all");
+                  setSessionRatings([]);
+                }}
+              >
+                <span>{team.shortLabel}</span>
+                <strong>{team.deck.length} 张</strong>
+                <small>{team.status === "deep" ? "深度包" : "首批包"}</small>
+              </button>
+            ))}
+          </div>
+          <div className="panelHeader subHeader">
+            <h2>训练范围</h2>
           </div>
           <div className="filterList">
             <button
@@ -749,10 +779,10 @@ function MemoryTrainingScreen() {
               onClick={() => setCategoryFilter("all")}
             >
               全部
-              <span>{celticsMemoryDeck.length}</span>
+              <span>{currentDeck.length}</span>
             </button>
             {categories.map((category) => {
-              const count = celticsMemoryDeck.filter((card) => card.category === category).length;
+              const count = currentDeck.filter((card) => card.category === category).length;
               return (
                 <button
                   key={category}
@@ -787,6 +817,7 @@ function MemoryTrainingScreen() {
           {currentCard ? (
             <>
               <div className="topicRow">
+                <span>{selectedTeam.shortLabel}</span>
                 <span>{getMemoryCategoryLabel(currentCard.category)}</span>
                 <span>{currentCard.era}</span>
                 <span>难度 {currentCard.difficulty}</span>
@@ -880,7 +911,7 @@ function MemoryTrainingScreen() {
                 ))}
               </ul>
             ) : (
-              <p>300+ 卡片、可证实/广泛争议卡片来源校验通过。</p>
+              <p>{selectedTeam.shortLabel} 当前题库结构、来源和传闻标记校验通过。</p>
             )}
           </div>
           <div className="memoryPolicy">
@@ -888,6 +919,12 @@ function MemoryTrainingScreen() {
             <p>
               场外案件只写公开报道或司法进展；论坛传闻只作为“话术类型”训练，不改写成确定事实。
             </p>
+          </div>
+          <div className="memoryPolicy">
+            <strong>来源备注</strong>
+            {selectedTeam.sourceNotes.map((note) => (
+              <p key={note}>{note}</p>
+            ))}
           </div>
         </aside>
       </section>

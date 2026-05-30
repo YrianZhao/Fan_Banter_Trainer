@@ -1,50 +1,10 @@
-export type MemoryCategory =
-  | "playoff_loss"
-  | "finals_loss"
-  | "rivalry"
-  | "management"
-  | "injury_what_if"
-  | "player_conduct"
-  | "dirty_play"
-  | "fan_controversy"
-  | "legacy_debate"
-  | "teammate_help"
-  | "fan_meme";
+import type {
+  MemoryCard,
+  MemorySeed,
+} from "./memoryDeckTypes";
+import { buildMemoryDeck, claimSeed, seed } from "./memoryDeckFactory";
 
-export type MemoryFactuality =
-  | "verified"
-  | "widely_debated"
-  | "opinion"
-  | "meme"
-  | "forum_claim";
-
-export interface MemoryCard {
-  id: string;
-  teamId: "team-celtics";
-  category: MemoryCategory;
-  era: string;
-  title: string;
-  question: string;
-  answer: string;
-  attackLine: string;
-  sourceUrls: string[];
-  safetyNote: string;
-  factuality: MemoryFactuality;
-  difficulty: 1 | 2 | 3 | 4 | 5;
-}
-
-interface CelticsSeed {
-  id: string;
-  category: MemoryCategory;
-  era: string;
-  title: string;
-  fact: string;
-  attackAngle: string;
-  sourceUrls: string[];
-  safetyNote?: string;
-  factuality?: MemoryFactuality;
-  difficulty: 1 | 2 | 3 | 4 | 5;
-}
+interface CelticsSeed extends MemorySeed {}
 
 const sourceUrls = {
   basketballReference: "https://www.basketball-reference.com/teams/BOS/",
@@ -98,6 +58,12 @@ const sourceUrls = {
     "https://www.justice.gov/usao-sdny/pr/former-nba-player-terrence-williams-sentenced-10-years-prison-defrauding-nba-players",
   glenDavisEspn:
     "https://www.espn.com/nba/story/_/id/40113791/glen-big-baby-davis-sentenced-40-months-prison-scheme",
+  clutchPointsScandals:
+    "https://clutchpoints.com/nba/boston-celtics/biggest-scandals-in-boston-celtics-history/",
+  clutchPointsHeartbreak:
+    "https://clutchpoints.com/nba/boston-celtics/most-heartbreaking-moments-in-boston-celtics-history/",
+  sportingNewsRacism:
+    "https://www.sportingnews.com/us/nba/news/kyrie-irving-celtics-fans-racist-comments-boston/e3e41ad542f61e629acbcbaf",
 };
 
 const seeds: CelticsSeed[] = [
@@ -161,9 +127,9 @@ const seeds: CelticsSeed[] = [
   seed("2026-sixers-3-1-collapse", "playoff_loss", "2020s", "2026 对 76 人 3-1 被翻盘", "2026 年首轮凯尔特人在对 76 人系列赛曾 3-1 领先，最终抢七主场失利出局。", "3-1 领先被 76 人翻，绿军球迷再讲祖传硬仗也得先把这拳吃了。", [sourceUrls.sixersCeltics2026Nba, sourceUrls.sixersCeltics2026Ap, sourceUrls.sixersCeltics2026Bbr], 5),
   seed("2026-sixers-game7-home", "playoff_loss", "2020s", "2026 抢七主场输 76 人", "2026 年东部首轮抢七，凯尔特人在主场 100-109 输给 76 人。", "抢七在 TD Garden 被 76 人关门，这不是小黑点，是一整页开会材料。", [sourceUrls.sixersCeltics2026Game7, sourceUrls.sixersCeltics2026Nba], 5),
   seed("2026-sixers-rivalry-broken", "rivalry", "2020s", "76 人打破对绿军季后赛心魔", "2026 年 76 人淘汰凯尔特人，结束多年季后赛对绿军不利的叙事。", "以前绿军能拿 76 人当提款机，2026 直接被对手拿来反向清算。", [sourceUrls.sixersCeltics2026Ap, sourceUrls.sixersCeltics2026Bbr], 4),
-  seed("bill-russell-racism", "fan_controversy", "1960s", "拉塞尔遭遇波士顿种族歧视", "比尔·拉塞尔曾公开谈到自己在波士顿遭遇种族歧视和不尊重。", "绿军谈传统和城市文化时，拉塞尔那段遭遇就是最难看的历史阴影。", [sourceUrls.russellWikipedia, sourceUrls.billRussell], "讨论公开历史和种族歧视问题时保持严肃，不使用歧视性语言。", 5),
+  seed("bill-russell-racism", "fan_controversy", "1960s", "拉塞尔遭遇波士顿种族歧视", "比尔·拉塞尔曾公开谈到自己在波士顿遭遇种族歧视和不尊重。", "绿军谈传统和城市文化时，拉塞尔那段遭遇就是最难看的历史阴影。", [sourceUrls.russellWikipedia, sourceUrls.billRussell, sourceUrls.clutchPointsScandals], "讨论公开历史和种族歧视问题时保持严肃，不使用歧视性语言。", 5),
   seed("fans-racism-smart", "fan_controversy", "2020s", "马库斯·斯马特谈球迷种族歧视", "马库斯·斯马特曾公开谈到在波士顿遭遇种族歧视言论。", "连自家球员都公开谈过球迷种族问题，绿军别把主场文化吹得太干净。", [sourceUrls.marcusSmart, sourceUrls.espn], "只讨论公开报道和球迷文化争议，不复述歧视性原话。", 5),
-  seed("kyrie-racism-comments", "fan_controversy", "2020s", "欧文谈波士顿球迷环境", "凯里·欧文曾谈到回到波士顿比赛时与球迷环境相关的种族议题。", "欧文离队后互喷是一回事，波士顿球迷环境争议是另一回事，绿军球迷不能全当没听见。", [sourceUrls.kyrieIrving, sourceUrls.espn], "只讨论公开评论和球迷环境争议，不复述歧视性表达。", 4),
+  seed("kyrie-racism-comments", "fan_controversy", "2020s", "欧文谈波士顿球迷环境", "凯里·欧文曾谈到回到波士顿比赛时与球迷环境相关的种族议题。", "欧文离队后互喷是一回事，波士顿球迷环境争议是另一回事，绿军球迷不能全当没听见。", [sourceUrls.kyrieIrving, sourceUrls.sportingNewsRacism], "只讨论公开评论和球迷环境争议，不复述歧视性表达。", 4),
   seed("pierce-wheelchair", "fan_meme", "2000s", "皮尔斯轮椅梗", "2008 总决赛中保罗·皮尔斯坐轮椅离场后回归，后来成为长期球迷梗。", "皮尔斯轮椅梗被玩这么多年，绿军球迷再不爱听也绕不开。", [sourceUrls.paulPierce], 3),
   seed("ray-allen-exit", "teammate_help", "2010s", "雷·阿伦离队裂痕", "雷·阿伦离开凯尔特人加盟热火后，与部分前队友关系长期受关注。", "绿军三巨头不只有冠军，也有雷阿伦离队后的更衣室裂痕。", [sourceUrls.rayAllen, sourceUrls.celticsWikipedia], "讨论公开转会和队友关系，不做人身攻击。", 3),
   seed("rondo-locker-room", "player_conduct", "2010s", "隆多更衣室与性格争议", "拉简·隆多职业生涯中多次被讨论到个性、沟通和更衣室适配问题。", "绿军谈铁血控卫时，隆多那些更衣室争议也不是完全没材料。", [sourceUrls.rajonRondo], "只讨论公开篮球职业争议。", 3),
@@ -181,6 +147,13 @@ const seeds: CelticsSeed[] = [
   seed("jabari-bird-domestic-case", "player_conduct", "2010s", "贾巴里·伯德家暴案公开报道", "前凯尔特人球员 Jabari Bird 的家暴相关案件曾被公开报道，后续有承认足够事实的司法进展。", "绿军球迷说队史干净时，Jabari Bird 这种公开家暴案就是不能装看不见。", [sourceUrls.jabariBirdCbs], "涉及家庭暴力时只使用公开司法报道措辞，不添加未经证实细节。", 5),
   seed("jared-sullinger-dismissed-case", "player_conduct", "2010s", "萨林杰家暴指控后撤案", "Jared Sullinger 2013 年曾被逮捕并面临家暴相关指控，之后相关指控被撤销。", "萨林杰这事不能说成定罪，但被逮捕、被控、撤案本身就是绿军旧闻黑料。", [sourceUrls.sullingerEspnCharged, sourceUrls.sullingerEspnDismissed], "必须同时说明指控后来撤销，不能把撤案事件说成已定罪事实。", 4),
   seed("delonte-west-struggles", "player_conduct", "2010s", "德隆蒂·韦斯特场外困境", "前凯尔特人球员 Delonte West 生涯后期经历公开场外困境和健康问题。", "韦斯特这类场外困境更适合严肃讨论，不能当低级笑料，但确实是绿军旧将争议素材。", [sourceUrls.delonteWest], "涉及健康与生活困境时避免羞辱。", 2),
+  seed("len-bias-death", "player_conduct", "1980s", "伦·拜亚斯悲剧", "凯尔特人在 1986 年选中 Len Bias 后不久，Bias 因可卡因相关原因去世，成为队史重大悲剧。", "绿军队史不是只有冠军旗，Len Bias 这段悲剧和管理阴影一提就沉。", [sourceUrls.lenBias, sourceUrls.clutchPointsScandals], "描述公开历史悲剧，不用死亡或药物问题做低级羞辱。", 5),
+  seed("reggie-lewis-death", "player_conduct", "1990s", "雷吉·刘易斯猝逝", "Reggie Lewis 1993 年因心脏问题猝逝，凯尔特人重建和球队命运受到巨大打击。", "绿军 90 年代断崖不只是菜，还有 Reggie Lewis 这类沉重队史。", [sourceUrls.reggieLewis, sourceUrls.clutchPointsHeartbreak], "涉及猝逝和健康问题时只作历史事实，不嘲笑伤病或死亡。", 4),
+  seed("antoine-walker-contract-era", "management", "2000s", "安托万·沃克时代上限争议", "Antoine Walker 与 Paul Pierce 搭档时期，凯尔特人有东决经历但长期未真正冲出东部。", "沃克皮尔斯那几年有热闹没闭环，绿军球迷别把东决经历吹成争冠实力。", [sourceUrls.antoineWalker, sourceUrls.celticsSeasonsWikipedia], "讨论公开篮球表现和建队上限。", 3),
+  seed("doc-rivers-one-title", "legacy_debate", "2010s", "里弗斯三巨头只拿一冠", "Doc Rivers 执教的凯尔特人三巨头时期拿到 2008 冠军，但后续未能再夺冠。", "三巨头窗口最后只兑现一冠，绿军别把那套阵容吹成王朝。", [sourceUrls.docRivers, sourceUrls.celticsSeasonsWikipedia], 4),
+  seed("2010-perkins-injury-excuse", "injury_what_if", "2010s", "帕金斯伤病如果论", "2010 总决赛抢七前 Kendrick Perkins 受伤常被绿军球迷拿来解释失利。", "帕金斯伤病能解释一部分，但不能把抢七输湖人直接改判成绿军冠军。", [sourceUrls.perkins, sourceUrls.celticsSeasonsWikipedia], "讨论公开伤病影响，不嘲笑伤病。", 4),
+  seed("2023-brogdon-injury-excuse", "injury_what_if", "2020s", "布罗格登伤病借口", "2023 年东决期间，Malcolm Brogdon 伤病被部分球迷认为影响凯尔特人轮换和投射。", "布罗格登伤病能说，但 0-3 挖坑加抢七主场输热火，不能全塞给伤病背锅。", [sourceUrls.celticsSeasonsWikipedia, sourceUrls.espn], "讨论公开伤病和轮换影响，不嘲笑伤病。", 3),
+  seed("2024-kidd-jaylen-best-player", "fan_meme", "2020s", "基德挑拨杰伦最佳球员梗", "2024 总决赛期间，Jason Kidd 关于 Jaylen Brown 是凯尔特人最佳球员的说法引发大量讨论。", "连对手教练都能一句话挑动双探花排序，绿军内部老大叙事没那么稳。", [sourceUrls.jaylenBrown, sourceUrls.nba], "讨论公开赛前心理战和媒体话题，不延伸人身攻击。", 2),
   claimSeed("forum-private-rumor-trap", "通用", "无来源私生活传闻陷阱", "论坛会出现把球员私生活传闻当黑料的打法，但无来源严重指控不能当事实使用。", "靠没来源私生活传闻开火就是虚，绿军球迷反手一句来源呢你就断线。", 3),
   claimSeed("forum-league-whistle-protection", "通用", "联盟护豪门阴谋论", "论坛常见说法会把凯尔特人主场哨、联盟护豪门、暗箱操作混在一起说，证据通常不足。", "别一句联盟亲儿子就当证据，真要喷绿军就拿具体系列赛和判罚争议砸。", 3),
   claimSeed("forum-boston-media-mafia", "通用", "波士顿媒体团护短梗", "球迷论坛常把波士顿媒体声量和历史豪门滤镜当作凯尔特人被偏爱的理由。", "绿军那套媒体滤镜确实厚，但只喊媒体黑帮不如直接点名哪年哪轮被吹过头。", 2),
@@ -194,144 +167,8 @@ const seeds: CelticsSeed[] = [
   claimSeed("forum-2008-superteam-started-it", "2000s", "2008 三巨头抱团回旋镖", "球迷互喷里常用 2008 凯尔特人三巨头反击绿军球迷嘲笑别人抱团。", "绿军嘲别人抱团前先照镜子，2008 那套三巨头就是抱团互喷祖传回旋镖。", 4),
 ];
 
-const promptStyles = [
-  {
-    question: (seed: CelticsSeed) => `${seed.title} 的核心黑料是什么？`,
-    answer: (seed: CelticsSeed) => seed.fact,
-    attack: (seed: CelticsSeed) => seed.attackAngle,
-  },
-  {
-    question: (seed: CelticsSeed) => `如果对方吹凯尔特人“底蕴无敌”，可以用 ${seed.title} 怎么反击？`,
-    answer: (seed: CelticsSeed) => `${seed.fact} 对喷时要抓住的点是：${seed.attackAngle}`,
-    attack: (seed: CelticsSeed) => `别一提绿军就只数旗帜，${seed.attackAngle}`,
-  },
-  {
-    question: (seed: CelticsSeed) => `${seed.title} 属于哪类争议，为什么能当攻击点？`,
-    answer: (seed: CelticsSeed) => `类别是 ${categoryLabel(seed.category)}。${seed.fact}`,
-    attack: (seed: CelticsSeed) => `${seed.attackAngle} 这不是硬编，是绿军历史账本里能查到的素材。`,
-  },
-  {
-    question: (seed: CelticsSeed) => `看到凯尔特人球迷吹“硬仗稳定”，${seed.title} 怎么用？`,
-    answer: (seed: CelticsSeed) => `先说事实：${seed.fact} 再把话题拉回硬仗兑现。`,
-    attack: (seed: CelticsSeed) => `硬仗稳定别只挑赢的讲，${seed.attackAngle}`,
-  },
-  {
-    question: (seed: CelticsSeed) => `${seed.title} 最容易被对方如何洗白？你怎么拆？`,
-    answer: (seed: CelticsSeed) => `对方可能会说这是时代背景或偶然事件；拆法是回到结果：${seed.fact}`,
-    attack: (seed: CelticsSeed) => `别一句时代背景就洗完，${seed.attackAngle}`,
-  },
-  {
-    question: (seed: CelticsSeed) => `用一句话记住 ${seed.title}。`,
-    answer: (seed: CelticsSeed) => seed.attackAngle,
-    attack: (seed: CelticsSeed) => seed.attackAngle,
-  },
-  {
-    question: (seed: CelticsSeed) => `${seed.era} 凯尔特人的 ${seed.title} 能打哪个球迷痛点？`,
-    answer: (seed: CelticsSeed) => `${seed.fact} 痛点是 ${categoryLabel(seed.category)}。`,
-    attack: (seed: CelticsSeed) => `别把 ${seed.era} 讲成只有荣光，${seed.attackAngle}`,
-  },
-];
-
-export const celticsMemoryDeck: MemoryCard[] = seeds.flatMap((seedItem) =>
-  promptStyles.map((style, index) => ({
-    id: `${seedItem.id}-card-${index + 1}`,
-    teamId: "team-celtics" as const,
-    category: seedItem.category,
-    era: seedItem.era,
-    title: seedItem.title,
-    question: style.question(seedItem),
-    answer: style.answer(seedItem),
-    attackLine: style.attack(seedItem),
-    sourceUrls: seedItem.sourceUrls,
-    safetyNote:
-      seedItem.safetyNote ??
-      "使用公开比赛、管理或历史争议素材；避免仇恨、威胁、人肉和无来源严重指控。",
-    factuality: seedItem.factuality ?? defaultFactuality(seedItem.category),
-    difficulty: seedItem.difficulty,
-  })),
+export const celticsMemoryDeck: MemoryCard[] = buildMemoryDeck(
+  "team-celtics",
+  "凯尔特人",
+  seeds,
 );
-
-function seed(
-  id: string,
-  category: MemoryCategory,
-  era: string,
-  title: string,
-  fact: string,
-  attackAngle: string,
-  sourceUrlsInput: string[],
-  safetyNoteOrDifficulty?: string | 1 | 2 | 3 | 4 | 5,
-  maybeDifficulty?: 1 | 2 | 3 | 4 | 5,
-): CelticsSeed {
-  return {
-    id,
-    category,
-    era,
-    title,
-    fact,
-    attackAngle,
-    sourceUrls: sourceUrlsInput,
-    safetyNote: typeof safetyNoteOrDifficulty === "string" ? safetyNoteOrDifficulty : undefined,
-    difficulty:
-      typeof safetyNoteOrDifficulty === "number"
-        ? safetyNoteOrDifficulty
-        : maybeDifficulty ?? 3,
-  };
-}
-
-function claimSeed(
-  id: string,
-  era: string,
-  title: string,
-  fact: string,
-  attackAngle: string,
-  difficulty: 1 | 2 | 3 | 4 | 5,
-): CelticsSeed {
-  return {
-    id,
-    category: "fan_meme",
-    era,
-    title,
-    fact,
-    attackAngle,
-    sourceUrls: [],
-    safetyNote:
-      "这是论坛梗/传闻型话术训练素材，只能作为对喷语境或识别陷阱使用，不能包装成已证实事实。",
-    factuality: "forum_claim",
-    difficulty,
-  };
-}
-
-function categoryLabel(category: MemoryCategory): string {
-  const labels: Record<MemoryCategory, string> = {
-    playoff_loss: "季后赛失利",
-    finals_loss: "总决赛失利",
-    rivalry: "宿敌互喷",
-    management: "管理层争议",
-    injury_what_if: "伤病如果论",
-    player_conduct: "球员公开争议",
-    dirty_play: "强硬/脏动作争议",
-    fan_controversy: "球迷文化争议",
-    legacy_debate: "历史地位争议",
-    teammate_help: "队友关系争议",
-    fan_meme: "球迷梗/论坛梗",
-  };
-
-  return labels[category];
-}
-
-function defaultFactuality(category: MemoryCategory): MemoryFactuality {
-  if (category === "fan_meme") {
-    return "meme";
-  }
-
-  if (
-    category === "legacy_debate" ||
-    category === "teammate_help" ||
-    category === "fan_controversy" ||
-    category === "dirty_play"
-  ) {
-    return "widely_debated";
-  }
-
-  return "verified";
-}

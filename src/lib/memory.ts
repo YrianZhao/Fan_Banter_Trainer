@@ -1,4 +1,4 @@
-import type { MemoryCard, MemoryCategory, MemoryFactuality } from "../data/celticsMemoryDeck";
+import type { MemoryCard, MemoryCategory, MemoryFactuality } from "../data/memoryDeckTypes";
 
 export type MemoryRating = "again" | "hard" | "good";
 

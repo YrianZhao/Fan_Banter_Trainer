@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { celticsMemoryDeck } from "../data/celticsMemoryDeck";
 import { defaultDataset } from "../data/defaultDataset";
+import { allMemoryDecks, memoryTeams } from "../data/memoryDecks";
 import {
   applyResponse,
   buildRoundScenarios,
@@ -203,18 +204,27 @@ describe("admin data utilities", () => {
   });
 });
 
-describe("celtics memory training deck", () => {
+describe("team memory training decks", () => {
   it("ships at least 300 Celtics memory cards", () => {
     expect(celticsMemoryDeck.length).toBeGreaterThanOrEqual(300);
   });
 
+  it("ships starter memory decks for multiple teams", () => {
+    expect(memoryTeams.length).toBeGreaterThanOrEqual(3);
+    expect(allMemoryDecks.length).toBeGreaterThan(celticsMemoryDeck.length);
+
+    for (const team of memoryTeams) {
+      expect(team.deck.length).toBeGreaterThanOrEqual(team.status === "deep" ? 300 : 100);
+      expect(team.deck.every((card) => card.teamId === team.id)).toBe(true);
+    }
+  });
+
   it("keeps every memory card structurally usable", () => {
-    const result = validateMemoryDeck(celticsMemoryDeck);
+    const result = validateMemoryDeck(allMemoryDecks);
 
     expect(result.errors).toEqual([]);
 
-    for (const card of celticsMemoryDeck) {
-      expect(card.teamId).toBe("team-celtics");
+    for (const card of allMemoryDecks) {
       expect(card.question.trim()).toBeTruthy();
       expect(card.answer.trim()).toBeTruthy();
       expect(card.attackLine.trim()).toBeTruthy();
@@ -222,8 +232,8 @@ describe("celtics memory training deck", () => {
     }
   });
 
-  it("requires sourced wording for verified or widely debated Celtics memory cards", () => {
-    for (const card of celticsMemoryDeck) {
+  it("requires sourced wording for verified or widely debated memory cards", () => {
+    for (const card of allMemoryDecks) {
       if (card.factuality === "verified" || card.factuality === "widely_debated") {
         expect(card.sourceUrls.length).toBeGreaterThan(0);
       }
@@ -231,7 +241,7 @@ describe("celtics memory training deck", () => {
   });
 
   it("marks unsourced forum-claim cards as non-factual training material", () => {
-    const forumClaimCards = celticsMemoryDeck.filter((card) => card.factuality === "forum_claim");
+    const forumClaimCards = allMemoryDecks.filter((card) => card.factuality === "forum_claim");
 
     expect(forumClaimCards.length).toBeGreaterThan(0);
     for (const card of forumClaimCards) {
