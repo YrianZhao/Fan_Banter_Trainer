@@ -477,7 +477,7 @@ function buildDataset(): BanterDataset {
   });
 
   return {
-    version: "0.3.0",
+    version: "0.4.0",
     updatedAt: "2026-05-26",
     entities,
     topics,
@@ -494,58 +494,101 @@ function buildCorrectOption(
     playoff_failure: [
       "别只会翻一轮黑历史，季后赛要看完整样本；{enemy}那边真要逐轮审判，自己也经不起这么翻。",
       "你抓这一轮可以，但别装成终审判决；硬仗样本摊开看，{enemy}那边也别想全身而退。",
+      "季后赛不是剪一张黑图就能判案；真要开庭，把双方每轮首锅、二锅和对手强度都摆出来。",
+      "别岁月史书成只输过这一回合；系列赛账本摊开，{enemy}那边也有被打到沉默的夜晚。",
+      "拿一轮失败当传家宝可以，但别碰瓷完整履历；真比季后赛，别只会拿高亮评论当证据。",
     ],
     finals_loss: [
       "总决赛输了当然扣分，但能长期站到最后一关本身就是门槛；{enemy}那边先把同级舞台次数摆上来。",
       "拿总决赛失利来压人可以，可别把进不去总决赛包装成更干净；没到考场的人别笑交卷的人错题多。",
+      "总决赛黑点能聊，但进不去总决赛的人少装无瑕白玉；一个是错题多，一个是卷子都没摸几次。",
+      "别把亚军说成原罪，先问{enemy}那边有没有能力稳定把球队拖到最高舞台。",
+      "最高舞台输球当然难看，但拿低轮次回家的人嘲笑总决赛输家，这火力本身就带回旋镖。",
     ],
     superteam: [
       "阵容强不等于冠军自动到账；真这么简单，{enemy}那边那些纸面强队就不会一年年翻车。",
       "你可以喷组队观感，但别把规则内选择说成没本事；最后还得在场上把账结清。",
+      "说抱团可以，但别双标成自己补强叫运作，别人补强叫投机；标准先统一再上嘴脸。",
+      "阵容豪华是争议，不是判死刑；豪阵翻车的笑话联盟从来不缺，{enemy}那边别装没见过。",
+      "冠军路径可以扣分，但不能把场上兑现一键清零；不然纸面阵容强却翻车的队更该被开会。",
     ],
     trade_drama: [
       "转会观感不好可以喷，但职业联盟不是童话书；{enemy}那边要谈忠诚，也先把自家交易账本翻干净。",
       "换队是黑点还是选择，要看后面怎么兑现；光骂路径不看结果，就是拿情绪冒充分析。",
+      "离队可以被喷，但别演成只有别人做选择；真翻交易史，谁家球迷都别装道德标兵。",
+      "职业联盟谈忠诚最容易回旋镖：管理层能交易人，球员换队就突然成原罪？",
+      "路径争议归路径争议，场上没兑现才是真正难看；只会骂路线，说明你已经没比赛内容可打。",
     ],
     injury_what_if: [
       "伤病让样本变短是事实，但拿伤病当嘲点就太低级；讨论上限至少得把健康时的影响力算进去。",
       "如果论不能换冠军，可也别把健康问题说成能力不行；{enemy}那边先分清运气和实力。",
+      "伤病不是免死金牌，也不是羞辱材料；健康样本和缺席成本分开算，才像认真聊球。",
+      "如果论不能直接封神，但拿伤病开香槟也挺掉价；真要吵，就拿健康年份的对位和数据说话。",
+      "出勤短板可以扣分，可别把遗憾说成菜；这类话一出口，路人都知道你没准备材料。",
     ],
     referee_controversy: [
       "裁判尺度能讨论，但别把所有回合都甩给哨子；真有统治力，就别只靠慢镜头赢论坛。",
       "你要讲尺度就逐回合讲，别一句裁判把比赛全抹掉；{enemy}那边也没少吃过尺度红利。",
+      "裁判争议不是万能垃圾桶，什么失误、断电、投不进都往里倒，只会显得复盘能力为零。",
+      "有争议就拿回合说话，别拿一张截图审判整轮系列赛；论坛断案不是录像中心。",
+      "尺度可以喷，但别装成只有自己吃亏；哨子账本真翻起来，{enemy}那边也未必干净。",
     ],
     stat_padding: [
       "数据当然要看含金量，但别只在不喜欢的人身上查水分；{enemy}那边的数据也经得起同样拆解吗？",
       "刷不刷要看比赛语境，不是数据好就扣帽子；真要查垃圾时间和效率，大家一起上表格。",
+      "别一看到好数据就喊刷，先把比分、对手、效率和回合价值拆开；不然就是印象流开会。",
+      "数据不能包治百病，但也不是你不喜欢就作废；真要扣水分，{enemy}那边也一起过筛。",
+      "别拿集锦当数据库，关键回合、失误、效率一起看，谁裸泳一眼就出来。",
     ],
     choking_claim: [
       "关键战拉胯能喷，但别用几场球偷换整个生涯；{enemy}那边的硬仗黑料也不是没有。",
       "你抓关键战没问题，可别只剪失败回合；真比硬仗，就把系列赛贡献和对手强度一起算。",
+      "关键战开会可以，但别只会复读战犯；先分清谁首锅、谁二锅、谁是被阵容拖下水。",
+      "硬仗不是只截最后两分钟，前面四十分钟谁在续命也得算；别靠短视频审判系列赛。",
+      "你说拉胯可以，拿样本来；只喊战犯不列回合，攻击力看着大，其实一碰就碎。",
     ],
     legacy_debate: [
       "历史地位不是靠一句黑点打穿的；你可以扣分，但{enemy}那边也得拿同等级荣誉和样本来对账。",
       "跨时代吵架最怕双标：喜欢的人看荣誉，不喜欢的人看瑕疵；先把标准统一再开喷。",
+      "历史讨论不是饭圈打榜，不能只给自家算巅峰、给别人算黑点；账本一摊，双标最先死。",
+      "别用一句梗压整个履历，荣誉、巅峰、长度、硬仗都要算；{enemy}那边也别想只交选择题。",
+      "想碰瓷历史地位就别拿情绪当证据；同一把尺子量下去，很多吹上天的故事也会漏风。",
     ],
     teammate_help: [
       "队友强不是原罪，历史级核心本来就要把强阵容兑现；{enemy}那边有帮手时怎么不主动扣分？",
       "别把团队篮球偷换成抱大腿；真有强队友就该出成绩，出不了成绩才更难看。",
+      "队友帮助能讨论，但别把有帮手直接翻译成没能力；联盟冠军史本来就是强强合作。",
+      "帮手强不丢人，强阵容不夺冠才丢人；{enemy}那边如果也吃配置红利，就别装孤胆英雄。",
+      "别一到别人就是抱大腿，一到自家就是合理补强；这种双标在论坛只能骗同温层。",
     ],
     management_failure: [
       "管理层翻车确实该喷，但这更说明争冠不是喊口号；{enemy}那边要是操作更乱，就别装运营大师。",
       "建队失误可以认，可别只盯别人账本；{enemy}那边那些烂操作翻出来也够开一桌会。",
+      "管理层烂账可以开会，但别把球队所有成败都甩给办公室；场上兑现和建队锅要分清。",
+      "你要喷操作就列交易、薪资和选秀，别只会一句管理层有病；那叫情绪，不叫复盘。",
+      "运营翻车不是免罪牌，也不是万能锅；真比建队，{enemy}那边的补强笑话也不少。",
     ],
     fan_meme: [
       "梗可以玩，但别把梗当判决书；真上强度还得回到比赛事实和系列赛结果。",
       "论坛段子能热场，不能当证据；{enemy}那边如果只剩梗，那就是没材料了。",
+      "玩梗可以，别把烂梗当核武器；一问年份和回合就哑火，那叫跟风不是懂球。",
+      "高亮评论不等于事实，评分区情绪也不是判决书；真要开喷，至少把材料带齐。",
+      "梗图只能赢一秒，事实能赢一整楼；{enemy}那边要是只会复读，那就已经没活了。",
     ],
   };
   const punch = pickByIndex(punches[topicPlan.category], topicIndex + attackIndex);
+  const closers = [
+    "这话说重一点：别只会挑别人伤疤，自己阵营的烂账也没少到能装清白。",
+    "真要上强度，就按同一标准互查账，别一到自家就开始岁月史书。",
+    "论坛吵架最怕没材料，你这套要是只靠情绪，下一句就该被人按回数据表里。",
+    "别急着扣帽子，先把比赛、年份、对手和结果说清楚；说不清就是纯嘴硬。",
+  ];
+  const closer = pickByIndex(closers, topicIndex * 3 + attackIndex);
 
   return {
     id: `${attackLineId}-option-correct`,
     attackLineId,
-    text: `${topicPlan.correctFrame}。${punch}`,
+    text: `${topicPlan.correctFrame}。${punch}${closer}`,
     isCorrect: true,
     responseType: "rebuttal_then_counterattack",
     explanation: `有效，因为它先接住{target}这条争议，不硬洗；随后用同一标准、样本范围或{enemy}那边的可比短板完成反击，语气更硬但仍然有论据。`,
@@ -612,6 +655,69 @@ function selectWrongTemplates({
       explanation: "无效，冠军可以作为反击素材，但不能替代对当前攻击点的直接回应。",
       selfDamageIfWrong: 12,
       requiredKnowledgeTags: ["上下文匹配"],
+    },
+    {
+      text: "别洗了，评分区都把{target}打成战犯了，这还需要解释？",
+      responseType: "unsupported_claim",
+      explanation: "无效，评分区情绪不能替代比赛证据，容易被对方要求列回合。",
+      selfDamageIfWrong: 14,
+      requiredKnowledgeTags: ["事实依据"],
+    },
+    {
+      text: "你们这群人就是滤镜太厚，换个球衣早就喷退役了。",
+      responseType: "weak_deflection",
+      explanation: "无效，这句话只是在攻击球迷群体，没有回应当前篮球争议。",
+      selfDamageIfWrong: 12,
+      requiredKnowledgeTags: ["上下文匹配"],
+    },
+    {
+      text: "别拿年份和数据压我，我看比赛的感觉不会错。",
+      responseType: "unsupported_claim",
+      explanation: "无效，感觉可以引出观点，但不能替代年份、数据和具体回合。",
+      selfDamageIfWrong: 14,
+      requiredKnowledgeTags: ["事实依据"],
+    },
+    {
+      text: "{target}这事不用细聊，反正{enemy}也干过类似的。",
+      responseType: "wrong_context",
+      explanation: "无效，反打双标之前必须先回应当前攻击点，否则只是逃题。",
+      selfDamageIfWrong: 12,
+      requiredKnowledgeTags: ["同一标准"],
+    },
+    {
+      text: "你要是真懂球，就不会问这种问题。",
+      responseType: "weak_deflection",
+      explanation: "无效，这是典型空话压人，不给证据也不给反击角度。",
+      selfDamageIfWrong: 10,
+      requiredKnowledgeTags: ["反击力度"],
+    },
+    {
+      text: "这不是黑点，这是媒体和黑粉联合做局。",
+      responseType: "unsupported_claim",
+      explanation: "无效，未经证实的做局说法属于阴谋论，会让自己额外掉血。",
+      selfDamageIfWrong: 16,
+      requiredKnowledgeTags: ["事实依据"],
+    },
+    {
+      text: "别管过程，最后有人背锅就完事了。",
+      responseType: "wrong_context",
+      explanation: "无效，甩锅不等于复盘，尤其无法说明为什么这个选项贴合当前攻击。",
+      selfDamageIfWrong: 13,
+      requiredKnowledgeTags: ["系列赛复盘"],
+    },
+    {
+      text: "{enemy}球迷先把自家专区管好，再来教别人怎么聊球。",
+      responseType: "weak_deflection",
+      explanation: "无效，攻击球迷社区不能回应球员或球队争议。",
+      selfDamageIfWrong: 12,
+      requiredKnowledgeTags: ["上下文匹配"],
+    },
+    {
+      text: "别装理中客了，这种球看一眼就知道谁菜。",
+      responseType: "unsupported_claim",
+      explanation: "无效，把复杂争议压成一句谁菜，没有证据也没有上下文。",
+      selfDamageIfWrong: 14,
+      requiredKnowledgeTags: ["事实依据"],
     },
   ];
   const categorySpecific: Record<TopicCategory, WrongOptionTemplate[]> = {
@@ -814,7 +920,7 @@ function selectWrongTemplates({
   ];
   const start = (topicIndex * 2 + attackIndex) % pool.length;
 
-  return [0, 1, 2].map((offset) => pool[(start + offset) % pool.length]);
+  return [0, 1, 2, 3, 4].map((offset) => pool[(start + offset) % pool.length]);
 }
 
 function pickByIndex<T>(items: T[], index: number): T {

@@ -244,8 +244,8 @@ export function validateDataset(dataset: BanterDataset): ValidationResult {
     const options = dataset.responseOptions.filter((option) => option.attackLineId === line.id);
     const correctCount = options.filter((option) => option.isCorrect).length;
 
-    if (options.length < 4) {
-      errors.push(`attackLine ${line.id} 至少需要 4 个 response options。`);
+    if (options.length < 6) {
+      errors.push(`attackLine ${line.id} 至少需要 6 个 response options。`);
     }
     if (correctCount !== 1) {
       errors.push(`attackLine ${line.id} 必须且只能有 1 个正确选项。`);

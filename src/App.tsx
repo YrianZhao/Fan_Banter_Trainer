@@ -1124,7 +1124,7 @@ function createBlankOptions(attackLineId: string): ResponseOption[] {
       selfDamageIfWrong: 0,
       requiredKnowledgeTags: [],
     },
-    ...[1, 2, 3].map((index) => ({
+    ...[1, 2, 3, 4, 5].map((index) => ({
       id: `${attackLineId}-option-wrong-${index}`,
       attackLineId,
       text: "填写一个错误或较弱的选项。",
