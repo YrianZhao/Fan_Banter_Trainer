@@ -44,10 +44,22 @@ describe("dataset integrity", () => {
     expect(result.errors).toEqual([]);
     expect(players.length).toBeGreaterThanOrEqual(10);
     expect(teams.length).toBeGreaterThanOrEqual(8);
+    expect(defaultDataset.attackLines.length).toBeGreaterThanOrEqual(216);
+    expect(defaultDataset.responseOptions.length).toBeGreaterThanOrEqual(1296);
 
     for (const entity of defaultDataset.entities) {
       const topicCount = defaultDataset.topics.filter((topic) => topic.targetId === entity.id).length;
       expect(topicCount).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it("expands each topic to at least four attack lines", () => {
+    for (const topic of defaultDataset.topics) {
+      const attackCount = defaultDataset.attackLines.filter(
+        (line) => line.controversyTopicId === topic.id,
+      ).length;
+
+      expect(attackCount).toBeGreaterThanOrEqual(4);
     }
   });
 

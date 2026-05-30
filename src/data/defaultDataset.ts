@@ -18,7 +18,7 @@ interface TopicPlan {
   sourceUrls: string[];
   safePhrasingNotes: string;
   relatedTargets: string[];
-  attacks: [string, string];
+  attacks: string[];
   correctFrame: string;
   requiredKnowledgeTags: string[];
 }
@@ -415,7 +415,7 @@ function plan(
     sourceUrls: [],
     safePhrasingNotes,
     relatedTargets,
-    attacks,
+    attacks: expandAttacks(attacks, category),
     correctFrame,
     requiredKnowledgeTags,
   };
@@ -481,13 +481,68 @@ function buildDataset(): BanterDataset {
   });
 
   return {
-    version: "0.4.1",
+    version: "0.5.0",
     updatedAt: "2026-05-26",
     entities,
     topics,
     attackLines,
     responseOptions,
   };
+}
+
+function expandAttacks(attacks: [string, string], category: TopicCategory): string[] {
+  const extraTemplates: Record<TopicCategory, [string, string]> = {
+    playoff_failure: [
+      "别老说过程多艰难，季后赛最后就是没兑现；{target}这笔账拿到论坛上就是会被反复开会。",
+      "{target}球迷最怕别人翻季后赛账本，一翻就是首锅二锅都绕不开。",
+    ],
+    finals_loss: [
+      "最高舞台不是常规赛集锦，{target}总决赛这类黑点一摆出来，吹历史地位就没那么顺了。",
+      "别把总决赛失败包装成悲情，输了就是输了，{target}球迷得先把这口锅接住。",
+    ],
+    superteam: [
+      "别讲得像单核闯关，{target}这条争冠路线一说出来，反方就能直接开抱团会。",
+      "{target}球迷吹含金量前，先解释阵容红利；纸面优势这么大还想装孤胆英雄？",
+    ],
+    trade_drama: [
+      "一谈忠诚和带队，{target}这段转会/离队争议就会被拉出来公开处刑。",
+      "{target}球迷别装受害者，路线选择和舆论反噬本来就是一套账。",
+    ],
+    injury_what_if: [
+      "如果论听着浪漫，但{target}真到荣誉表上就是少样本，论坛吵架没人给如果发奖杯。",
+      "{target}球迷最爱说健康就怎样，可现实是出勤和窗口期都要算进评价。",
+    ],
+    referee_controversy: [
+      "{target}这类尺度争议一出来，对手球迷肯定会说不是实力碾压，是哨子和规则护航。",
+      "别一边吃尺度红利一边装纯实力，{target}这点被抓住就很难完全洗干净。",
+    ],
+    stat_padding: [
+      "数据漂亮不等于回合价值拉满，{target}这种争议最容易被说成表格好看、硬仗没用。",
+      "{target}球迷别只甩数据截图，关键回合、效率和比赛阶段一拆，水分就藏不住。",
+    ],
+    choking_claim: [
+      "关键战不是粉丝控评区，{target}这类拉胯样本一出现，反方就能直接喊开会。",
+      "别拿常规赛把硬仗糊过去，{target}一到关键节点被放大，球迷就得准备挨打。",
+    ],
+    legacy_debate: [
+      "历史地位不是只看高光剪辑，{target}这些瑕疵摊开讲，排名就没法吹得那么满。",
+      "{target}球迷别急着封神，黑点和荣誉一起算才叫历史账本。",
+    ],
+    teammate_help: [
+      "别把团队红利说成个人独闯，{target}身边配置一摆出来，单核叙事就站不稳。",
+      "{target}球迷吹老大成色前，先承认队友、体系和教练给了多少底盘。",
+    ],
+    management_failure: [
+      "别只会怪运气，{target}这类建队/管理问题本来就是球迷互喷的固定靶子。",
+      "{target}球迷谈运营眼光前，先把这些烂操作解释清楚，不然就是回旋镖。",
+    ],
+    fan_meme: [
+      "这梗能火不是没原因，{target}球迷越急，论坛越爱把这事翻出来反复玩。",
+      "别说只是玩梗，{target}这个点能变成梗，本身就说明槽点够稳定。",
+    ],
+  };
+
+  return [...attacks, ...extraTemplates[category]];
 }
 
 function buildCorrectOption(
