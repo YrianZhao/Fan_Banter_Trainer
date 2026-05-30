@@ -1,7 +1,9 @@
 import {
   AlertTriangle,
+  Brain,
   CheckCircle2,
   Download,
+  Eye,
   Plus,
   RotateCcw,
   Settings,
@@ -14,6 +16,8 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, Dispatch, SetStateAction } from "react";
+import { celticsMemoryDeck } from "./data/celticsMemoryDeck";
+import type { MemoryCard, MemoryCategory } from "./data/celticsMemoryDeck";
 import { defaultDataset } from "./data/defaultDataset";
 import {
   applyResponse,
@@ -25,6 +29,17 @@ import {
   scoreGame,
   validateDataset,
 } from "./lib/game";
+import {
+  EMPTY_MEMORY_PROGRESS,
+  getMemoryCategoryLabel,
+  getMemoryFactualityLabel,
+  getMemoryStats,
+  normalizeMemoryProgress,
+  rateMemoryCard,
+  selectNextMemoryCard,
+  validateMemoryDeck,
+} from "./lib/memory";
+import type { MemoryProgressState, MemoryRating } from "./lib/memory";
 import type {
   AnswerLog,
   AnswerResult,
@@ -43,6 +58,7 @@ import type {
 } from "./types";
 
 const STORAGE_KEY = "fan-banter-trainer-dataset";
+const MEMORY_STORAGE_KEY = "fan-banter-trainer-celtics-memory";
 
 const categoryLabels: Record<TopicCategory, string> = {
   playoff_failure: "季后赛失败",
@@ -75,7 +91,7 @@ const responseTypes = Object.keys(responseTypeLabels) as ResponseType[];
 
 function App() {
   const [dataset, setDataset] = useState<BanterDataset>(() => loadDataset());
-  const [view, setView] = useState<"game" | "admin">("game");
+  const [view, setView] = useState<"game" | "memory" | "admin">("game");
   const [phase, setPhase] = useState<GamePhase>("setup");
   const [userSide, setUserSide] = useState(dataset.entities[0]?.id ?? "");
   const [enemySide, setEnemySide] = useState(dataset.entities[1]?.id ?? "");
@@ -192,6 +208,10 @@ function App() {
             <Swords size={18} />
             游戏
           </button>
+          <button className={view === "memory" ? "active" : ""} onClick={() => setView("memory")}>
+            <Brain size={18} />
+            记忆训练
+          </button>
           <button className={view === "admin" ? "active" : ""} onClick={() => setView("admin")}>
             <Settings size={18} />
             Admin
@@ -238,6 +258,8 @@ function App() {
             />
           )}
         </main>
+      ) : view === "memory" ? (
+        <MemoryTrainingScreen />
       ) : (
         <AdminScreen dataset={dataset} setDataset={setDataset} validation={validation} />
       )}
@@ -634,6 +656,288 @@ function ScoreMeter({ label, value }: { label: string; value: number }) {
       </div>
     </div>
   );
+}
+
+function MemoryTrainingScreen() {
+  const [progress, setProgress] = useState<MemoryProgressState>(() => loadMemoryProgress());
+  const [categoryFilter, setCategoryFilter] = useState<MemoryCategory | "all">("all");
+  const [currentCard, setCurrentCard] = useState<MemoryCard | undefined>(() =>
+    selectNextMemoryCard(celticsMemoryDeck, loadMemoryProgress()),
+  );
+  const [isRevealed, setIsRevealed] = useState(false);
+  const [sessionRatings, setSessionRatings] = useState<MemoryRating[]>([]);
+  const validation = useMemo(() => validateMemoryDeck(celticsMemoryDeck), []);
+  const stats = useMemo(() => getMemoryStats(celticsMemoryDeck, progress), [progress]);
+  const categories = useMemo(
+    () =>
+      Array.from(new Set(celticsMemoryDeck.map((card) => card.category))).sort((a, b) =>
+        getMemoryCategoryLabel(a).localeCompare(getMemoryCategoryLabel(b), "zh-Hans-CN"),
+      ),
+    [],
+  );
+  const filteredCount =
+    categoryFilter === "all"
+      ? celticsMemoryDeck.length
+      : celticsMemoryDeck.filter((card) => card.category === categoryFilter).length;
+  const cardProgress = currentCard ? progress.cards[currentCard.id] : undefined;
+  const accuracy =
+    stats.studied === 0
+      ? 0
+      : Math.round(
+          (Object.values(progress.cards).reduce((sum, item) => sum + item.correctCount, 0) /
+            Math.max(1, Object.values(progress.cards).reduce((sum, item) => sum + item.seenCount, 0))) *
+            100,
+        );
+
+  useEffect(() => {
+    window.localStorage.setItem(MEMORY_STORAGE_KEY, JSON.stringify(progress));
+  }, [progress]);
+
+  useEffect(() => {
+    setCurrentCard(selectNextMemoryCard(celticsMemoryDeck, progress, new Date(), categoryFilter));
+    setIsRevealed(false);
+  }, [categoryFilter, progress]);
+
+  function revealCard() {
+    setIsRevealed(true);
+  }
+
+  function rateCard(rating: MemoryRating) {
+    if (!currentCard) {
+      return;
+    }
+
+    const nextProgress = rateMemoryCard(progress, currentCard.id, rating);
+    setProgress(nextProgress);
+    setSessionRatings((ratings) => [...ratings, rating]);
+  }
+
+  function resetMemoryProgress() {
+    setProgress(EMPTY_MEMORY_PROGRESS);
+    setSessionRatings([]);
+    window.localStorage.removeItem(MEMORY_STORAGE_KEY);
+  }
+
+  return (
+    <main className="memoryLayout">
+      <section className="memoryIntro courtPanel">
+        <div>
+          <p className="eyebrow">凯尔特人专项黑料记忆</p>
+          <h2>像背单词一样背对喷材料</h2>
+          <p>
+            先看问题，想出事实点和回怼角度，再揭晓答案。论坛梗和传闻型话术会被明确标记，
+            训练重点是会用、会拆、不会把无来源严重指控说成事实。
+          </p>
+        </div>
+        <div className="memoryStats">
+          <StatPill label="卡片" value={stats.total} />
+          <StatPill label="已练" value={stats.studied} />
+          <StatPill label="待复习" value={stats.due} />
+          <StatPill label="掌握" value={stats.mastered} />
+        </div>
+      </section>
+
+      <section className="memoryGrid">
+        <aside className="memorySidebar courtPanel">
+          <div className="panelHeader">
+            <h2>训练范围</h2>
+            <Brain size={20} />
+          </div>
+          <div className="filterList">
+            <button
+              className={categoryFilter === "all" ? "filterChip active" : "filterChip"}
+              onClick={() => setCategoryFilter("all")}
+            >
+              全部
+              <span>{celticsMemoryDeck.length}</span>
+            </button>
+            {categories.map((category) => {
+              const count = celticsMemoryDeck.filter((card) => card.category === category).length;
+              return (
+                <button
+                  key={category}
+                  className={categoryFilter === category ? "filterChip active" : "filterChip"}
+                  onClick={() => setCategoryFilter(category)}
+                >
+                  {getMemoryCategoryLabel(category)}
+                  <span>{count}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="memoryMiniStats">
+            <p>
+              当前范围 <strong>{filteredCount}</strong> 张卡。
+            </p>
+            <p>
+              本轮已评 <strong>{sessionRatings.length}</strong> 张，准确度约{" "}
+              <strong>{accuracy}%</strong>。
+            </p>
+            <p>
+              遗忘次数 <strong>{stats.lapses}</strong> 次。点“忘了”会 5 分钟后再出现。
+            </p>
+          </div>
+          <button className="secondaryAction fullWidth" onClick={resetMemoryProgress}>
+            <RotateCcw size={16} />
+            清空记忆进度
+          </button>
+        </aside>
+
+        <section className="memoryCard courtPanel">
+          {currentCard ? (
+            <>
+              <div className="topicRow">
+                <span>{getMemoryCategoryLabel(currentCard.category)}</span>
+                <span>{currentCard.era}</span>
+                <span>难度 {currentCard.difficulty}</span>
+                <span>{getMemoryFactualityLabel(currentCard.factuality)}</span>
+              </div>
+
+              <div className="memoryQuestion">
+                <p className="eyebrow">当前卡片</p>
+                <h2>{currentCard.question}</h2>
+                <small>
+                  {cardProgress
+                    ? `已见 ${cardProgress.seenCount} 次，上次评级：${ratingLabel(cardProgress.lastRating)}`
+                    : "新卡。先自己想一遍再揭晓。"}
+                </small>
+              </div>
+
+              {!isRevealed ? (
+                <button className="primaryAction revealAction" onClick={revealCard}>
+                  <Eye size={18} />
+                  显示答案
+                </button>
+              ) : (
+                <>
+                  <div className="memoryAnswer">
+                    <div>
+                      <span>事实答案</span>
+                      <p>{currentCard.answer}</p>
+                    </div>
+                    <div>
+                      <span>可直接背的攻击句</span>
+                      <p>{currentCard.attackLine}</p>
+                    </div>
+                    <div>
+                      <span>使用边界</span>
+                      <p>{currentCard.safetyNote}</p>
+                    </div>
+                  </div>
+
+                  <div className="ratingGrid" aria-label="记忆评级">
+                    <button className="ratingButton again" onClick={() => rateCard("again")}>
+                      <strong>忘了</strong>
+                      <span>5 分钟后再来，别硬装会</span>
+                    </button>
+                    <button className="ratingButton hard" onClick={() => rateCard("hard")}>
+                      <strong>模糊</strong>
+                      <span>明天复习，先把事实点记住</span>
+                    </button>
+                    <button className="ratingButton good" onClick={() => rateCard("good")}>
+                      <strong>记住了</strong>
+                      <span>间隔拉长，进入复习队列</span>
+                    </button>
+                  </div>
+
+                  <div className="sourcePanel">
+                    <strong>来源 / 标记</strong>
+                    {currentCard.sourceUrls.length > 0 ? (
+                      <ul>
+                        {currentCard.sourceUrls.map((url) => (
+                          <li key={url}>
+                            <a href={url} target="_blank" rel="noreferrer">
+                              {formatSourceUrl(url)}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p>
+                        该卡是论坛梗/传闻型话术训练，无来源链接。用于识别和拆解话术，不作为事实背诵。
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
+            </>
+          ) : (
+            <div className="emptyMemory">
+              <h2>这个分类暂时没有卡片</h2>
+              <p>切换到“全部”或其他分类继续训练。</p>
+            </div>
+          )}
+        </section>
+
+        <aside className="memoryValidation courtPanel">
+          <h2>数据检查</h2>
+          <div className={validation.errors.length > 0 ? "validationBlock bad" : "validationBlock good"}>
+            <strong>{validation.errors.length > 0 ? "记忆题库有错误" : "记忆题库可用"}</strong>
+            {validation.errors.length > 0 ? (
+              <ul>
+                {validation.errors.slice(0, 8).map((error) => (
+                  <li key={error}>{error}</li>
+                ))}
+              </ul>
+            ) : (
+              <p>300+ 卡片、可证实/广泛争议卡片来源校验通过。</p>
+            )}
+          </div>
+          <div className="memoryPolicy">
+            <strong>口径</strong>
+            <p>
+              场外案件只写公开报道或司法进展；论坛传闻只作为“话术类型”训练，不改写成确定事实。
+            </p>
+          </div>
+        </aside>
+      </section>
+    </main>
+  );
+}
+
+function StatPill({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="statPill">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
+function loadMemoryProgress(): MemoryProgressState {
+  const raw = window.localStorage.getItem(MEMORY_STORAGE_KEY);
+
+  if (!raw) {
+    return EMPTY_MEMORY_PROGRESS;
+  }
+
+  try {
+    return normalizeMemoryProgress(JSON.parse(raw));
+  } catch {
+    return EMPTY_MEMORY_PROGRESS;
+  }
+}
+
+function ratingLabel(rating: MemoryRating | undefined): string {
+  if (rating === "again") {
+    return "忘了";
+  }
+  if (rating === "hard") {
+    return "模糊";
+  }
+  if (rating === "good") {
+    return "记住了";
+  }
+  return "无";
+}
+
+function formatSourceUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname.replace(/^www\./, "") + parsed.pathname.slice(0, 36);
+  } catch {
+    return url;
+  }
 }
 
 interface AdminScreenProps {

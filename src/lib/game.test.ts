@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { celticsMemoryDeck } from "../data/celticsMemoryDeck";
 import { defaultDataset } from "../data/defaultDataset";
 import {
   applyResponse,
@@ -7,6 +8,14 @@ import {
   normalizeDataset,
   validateDataset,
 } from "./game";
+import {
+  EMPTY_MEMORY_PROGRESS,
+  getMemoryStats,
+  normalizeMemoryProgress,
+  rateMemoryCard,
+  selectNextMemoryCard,
+  validateMemoryDeck,
+} from "./memory";
 import type { BanterDataset } from "../types";
 
 describe("dataset integrity", () => {
@@ -191,5 +200,71 @@ describe("admin data utilities", () => {
     expect(result.errors.some((error) => error.includes("topic id 重复"))).toBe(true);
     expect(result.errors.some((error) => error.includes("sourceUrls"))).toBe(true);
     expect(result.errors.some((error) => error.includes("必须且只能有 1 个正确选项"))).toBe(true);
+  });
+});
+
+describe("celtics memory training deck", () => {
+  it("ships at least 300 Celtics memory cards", () => {
+    expect(celticsMemoryDeck.length).toBeGreaterThanOrEqual(300);
+  });
+
+  it("keeps every memory card structurally usable", () => {
+    const result = validateMemoryDeck(celticsMemoryDeck);
+
+    expect(result.errors).toEqual([]);
+
+    for (const card of celticsMemoryDeck) {
+      expect(card.teamId).toBe("team-celtics");
+      expect(card.question.trim()).toBeTruthy();
+      expect(card.answer.trim()).toBeTruthy();
+      expect(card.attackLine.trim()).toBeTruthy();
+      expect(card.safetyNote.trim()).toBeTruthy();
+    }
+  });
+
+  it("requires sourced wording for verified or widely debated Celtics memory cards", () => {
+    for (const card of celticsMemoryDeck) {
+      if (card.factuality === "verified" || card.factuality === "widely_debated") {
+        expect(card.sourceUrls.length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it("marks unsourced forum-claim cards as non-factual training material", () => {
+    const forumClaimCards = celticsMemoryDeck.filter((card) => card.factuality === "forum_claim");
+
+    expect(forumClaimCards.length).toBeGreaterThan(0);
+    for (const card of forumClaimCards) {
+      expect(card.sourceUrls).toEqual([]);
+      expect(card.safetyNote).toContain("不能包装成已证实事实");
+    }
+  });
+
+  it("updates spaced-repetition progress and preserves JSON shape", () => {
+    const [card] = celticsMemoryDeck;
+    const now = new Date("2026-05-30T12:00:00.000Z");
+    const afterAgain = rateMemoryCard(EMPTY_MEMORY_PROGRESS, card.id, "again", now);
+    const afterGood = rateMemoryCard(afterAgain, card.id, "good", now);
+    const roundTripped = normalizeMemoryProgress(JSON.parse(JSON.stringify(afterGood)));
+
+    expect(afterAgain.cards[card.id].seenCount).toBe(1);
+    expect(afterAgain.cards[card.id].lapseCount).toBe(1);
+    expect(afterAgain.cards[card.id].nextReviewAt).toBe("2026-05-30T12:05:00.000Z");
+    expect(afterGood.cards[card.id].seenCount).toBe(2);
+    expect(afterGood.cards[card.id].correctCount).toBe(1);
+    expect(roundTripped.cards[card.id].seenCount).toBe(2);
+  });
+
+  it("selects a due memory card and calculates stats", () => {
+    const [card] = celticsMemoryDeck;
+    const now = new Date("2026-05-30T12:00:00.000Z");
+    const progress = rateMemoryCard(EMPTY_MEMORY_PROGRESS, card.id, "good", now);
+    const nextCard = selectNextMemoryCard(celticsMemoryDeck.slice(0, 4), progress, now);
+    const stats = getMemoryStats(celticsMemoryDeck.slice(0, 4), progress, now);
+
+    expect(nextCard).toBeDefined();
+    expect(nextCard?.id).not.toBe(card.id);
+    expect(stats.total).toBe(4);
+    expect(stats.studied).toBe(1);
   });
 });
