@@ -63,6 +63,7 @@ const responseTypeLabels: Record<ResponseType, string> = {
   rebuttal: "反驳",
   counterattack: "反击",
   rebuttal_then_counterattack: "先反驳再反击",
+  good_evidence_wrong_counter: "证据对但反击错",
   weak_deflection: "空泛转移",
   wrong_context: "上下文错位",
   unsupported_claim: "无证据狠话",

@@ -50,6 +50,19 @@ describe("dataset integrity", () => {
       expect(topicCount).toBeGreaterThanOrEqual(3);
     }
   });
+
+  it("includes half-right wrong-counter options as deliberate traps", () => {
+    for (const attackLine of defaultDataset.attackLines) {
+      const hasHalfRightTrap = defaultDataset.responseOptions.some(
+        (option) =>
+          option.attackLineId === attackLine.id &&
+          option.responseType === "good_evidence_wrong_counter" &&
+          !option.isCorrect,
+      );
+
+      expect(hasHalfRightTrap).toBe(true);
+    }
+  });
 });
 
 describe("combat rules", () => {

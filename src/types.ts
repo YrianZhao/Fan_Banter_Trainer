@@ -22,6 +22,7 @@ export type ResponseType =
   | "rebuttal"
   | "counterattack"
   | "rebuttal_then_counterattack"
+  | "good_evidence_wrong_counter"
   | "weak_deflection"
   | "wrong_context"
   | "unsupported_claim";

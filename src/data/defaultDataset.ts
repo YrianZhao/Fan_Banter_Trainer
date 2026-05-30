@@ -31,7 +31,11 @@ interface OptionTemplateContext {
 
 interface WrongOptionTemplate {
   text: string;
-  responseType: "weak_deflection" | "wrong_context" | "unsupported_claim";
+  responseType:
+    | "good_evidence_wrong_counter"
+    | "weak_deflection"
+    | "wrong_context"
+    | "unsupported_claim";
   explanation: string;
   selfDamageIfWrong: number;
   requiredKnowledgeTags: string[];
@@ -477,7 +481,7 @@ function buildDataset(): BanterDataset {
   });
 
   return {
-    version: "0.4.0",
+    version: "0.4.1",
     updatedAt: "2026-05-26",
     entities,
     topics,
@@ -602,7 +606,7 @@ function buildWrongOptions(
   attackLineId: string,
   context: OptionTemplateContext,
 ): ResponseOption[] {
-  return selectWrongTemplates(context).map((template, index) => ({
+  return [buildHalfRightWrongCounter(context), ...selectWrongTemplates(context)].map((template, index) => ({
     id: `${attackLineId}-option-wrong-${index + 1}`,
     attackLineId,
     text: template.text,
@@ -613,6 +617,33 @@ function buildWrongOptions(
     selfDamageIfWrong: template.selfDamageIfWrong,
     requiredKnowledgeTags: template.requiredKnowledgeTags,
   }));
+}
+
+function buildHalfRightWrongCounter({
+  topicPlan,
+  topicIndex,
+  attackIndex,
+}: OptionTemplateContext): WrongOptionTemplate {
+  const wrongCounters = [
+    "但{enemy}那边别装了，库里防守被点名那几轮一样是提款机。",
+    "但{enemy}那边也别笑，哈登关键战拉胯的素材一翻就是一整页。",
+    "但{enemy}那边更没资格说，太阳抢七半场崩盘那种名场面才叫社死。",
+    "但{enemy}那边先解释抱团路线，杜兰特去勇士这条路更难看。",
+    "但{enemy}那边也别装硬，恩比德季后赛突破问题比这个还刺眼。",
+    "但{enemy}那边先别叫，尼克斯低谷那么多年才缓过来，账本更长。",
+    "但{enemy}那边也别碰瓷，湖人那次阵容适配失败够开十栋楼。",
+    "但{enemy}那边更抽象，热火总决赛进攻断电不是一天两天了。",
+  ];
+  const wrongCounter = pickByIndex(wrongCounters, topicIndex + attackIndex);
+
+  return {
+    text: `${topicPlan.correctFrame}。${wrongCounter}`,
+    responseType: "good_evidence_wrong_counter",
+    explanation:
+      "半对半错：前半段证据能回应当前攻击，但后半段反击对象或角度不匹配，像是把别人的黑料硬塞进来。游戏里必须同时做到证据贴题、回怼也打中对方阵营。",
+    selfDamageIfWrong: 9,
+    requiredKnowledgeTags: ["证据贴题", "反击匹配"],
+  };
 }
 
 function selectWrongTemplates({
@@ -920,7 +951,7 @@ function selectWrongTemplates({
   ];
   const start = (topicIndex * 2 + attackIndex) % pool.length;
 
-  return [0, 1, 2, 3, 4].map((offset) => pool[(start + offset) % pool.length]);
+  return [0, 1, 2, 3].map((offset) => pool[(start + offset) % pool.length]);
 }
 
 function pickByIndex<T>(items: T[], index: number): T {

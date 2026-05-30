@@ -166,11 +166,14 @@ export function scoreGame(logs: AnswerLog[]): {
 
   const correctCount = logs.filter((log) => log.isCorrect).length;
   const wrongContextCount = logs.filter((log) => log.responseType === "wrong_context").length;
+  const halfRightCount = logs.filter(
+    (log) => log.responseType === "good_evidence_wrong_counter",
+  ).length;
   const unsupportedCount = logs.filter((log) => log.responseType === "unsupported_claim").length;
   const weakCount = logs.filter((log) => log.responseType === "weak_deflection").length;
   const correctRatio = correctCount / logs.length;
-  const factAccuracy = Math.round(correctRatio * 100 - unsupportedCount * 8);
-  const contextMatch = Math.round(correctRatio * 92 - wrongContextCount * 10 + 8);
+  const factAccuracy = Math.round(correctRatio * 100 - unsupportedCount * 8 + halfRightCount * 5);
+  const contextMatch = Math.round(correctRatio * 92 - wrongContextCount * 10 - halfRightCount * 12 + 8);
   const counterPunch = Math.round(
     (logs.reduce((sum, log) => sum + log.damageDealt, 0) / Math.max(1, logs.length * 25)) * 100,
   );
@@ -441,7 +444,7 @@ function buildAdvice(logs: AnswerLog[], scores: number[]): string[] {
   if (emotionalControl < 75) {
     advice.push("少用没论据的狠话，强语气但没事实会让自己掉血。");
   }
-  if (logs.some((log) => log.responseType === "wrong_context")) {
+  if (logs.some((log) => log.responseType === "wrong_context" || log.responseType === "good_evidence_wrong_counter")) {
     advice.push("本局有错位回答，复盘时重点看“敌方攻击”和“正确选项”的对应关系。");
   }
   if (advice.length === 0) {
