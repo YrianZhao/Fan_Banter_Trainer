@@ -1,4 +1,5 @@
 import { celticsMemoryDeck } from "./celticsMemoryDeck";
+import { generatedMemoryTeams } from "./generatedTeamMemoryDecks";
 import { lakersMemoryDeck } from "./lakersMemoryDeck";
 import type { MemoryCard, MemoryTeamId } from "./memoryDeckTypes";
 import { warriorsMemoryDeck } from "./warriorsMemoryDeck";
@@ -13,7 +14,7 @@ export interface MemoryTeam {
   sourceNotes: string[];
 }
 
-export const memoryTeams: MemoryTeam[] = [
+const manualTeams: MemoryTeam[] = [
   {
     id: "team-celtics",
     nameZh: "凯尔特人",
@@ -32,10 +33,10 @@ export const memoryTeams: MemoryTeam[] = [
     shortLabel: "湖人",
     color: "#552583",
     deck: lakersMemoryDeck,
-    status: "starter",
+    status: "deep",
     sourceNotes: [
-      "湖人首批包以公开季后赛失利、OK 内讧、豪阵失败和论坛常见冠军含金量梗为主。",
-      "后续需要继续扩到 300+ 卡片，并给更多场外事件补可靠来源。",
+      "湖人手工包以公开季后赛失利、OK 内讧、豪阵失败和论坛常见冠军含金量梗为主。",
+      "已与生成深度包合并，用于补足每队 300+ 卡片目标。",
     ],
   },
   {
@@ -44,12 +45,37 @@ export const memoryTeams: MemoryTeam[] = [
     shortLabel: "勇士",
     color: "#1d428a",
     deck: warriorsMemoryDeck,
-    status: "starter",
+    status: "deep",
     sourceNotes: [
-      "勇士首批包以 3-1、杜兰特加盟、格林争议、普尔拳击、低谷选秀和论坛体系梗为主。",
-      "后续需要继续扩到 300+ 卡片，并增加更多 1990s-2000s 队史材料。",
+      "勇士手工包以 3-1、杜兰特加盟、格林争议、普尔拳击、低谷选秀和论坛体系梗为主。",
+      "已与生成深度包合并，用于补足每队 300+ 卡片目标。",
     ],
   },
+] satisfies MemoryTeam[];
+
+const manualTeamsById = new Map(manualTeams.map((team) => [team.id, team]));
+
+const mergedGeneratedTeams: MemoryTeam[] = generatedMemoryTeams.map((generatedTeam) => {
+    const manualTeam = manualTeamsById.get(generatedTeam.id);
+
+    if (!manualTeam) {
+      return generatedTeam;
+    }
+
+    return {
+      ...generatedTeam,
+      shortLabel: manualTeam.shortLabel,
+      color: manualTeam.color,
+      deck: [...manualTeam.deck, ...generatedTeam.deck],
+      sourceNotes: [...manualTeam.sourceNotes, ...generatedTeam.sourceNotes],
+    };
+  });
+
+export const memoryTeams: MemoryTeam[] = [
+  ...mergedGeneratedTeams,
+  ...manualTeams.filter((team) => !generatedMemoryTeams.some((item) => item.id === team.id)),
 ];
+
+memoryTeams.sort((a, b) => a.nameZh.localeCompare(b.nameZh, "zh-Hans-CN"));
 
 export const allMemoryDecks = memoryTeams.flatMap((team) => team.deck);

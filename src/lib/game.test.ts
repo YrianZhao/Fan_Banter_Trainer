@@ -210,11 +210,12 @@ describe("team memory training decks", () => {
   });
 
   it("ships starter memory decks for multiple teams", () => {
-    expect(memoryTeams.length).toBeGreaterThanOrEqual(3);
+    expect(memoryTeams.length).toBe(30);
     expect(allMemoryDecks.length).toBeGreaterThan(celticsMemoryDeck.length);
 
     for (const team of memoryTeams) {
-      expect(team.deck.length).toBeGreaterThanOrEqual(team.status === "deep" ? 300 : 100);
+      expect(team.status).toBe("deep");
+      expect(team.deck.length).toBeGreaterThanOrEqual(300);
       expect(team.deck.every((card) => card.teamId === team.id)).toBe(true);
     }
   });

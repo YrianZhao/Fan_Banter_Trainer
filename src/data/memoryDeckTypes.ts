@@ -18,7 +18,37 @@ export type MemoryFactuality =
   | "meme"
   | "forum_claim";
 
-export type MemoryTeamId = "team-celtics" | "team-lakers" | "team-warriors";
+export type MemoryTeamId =
+  | "team-hawks"
+  | "team-celtics"
+  | "team-nets"
+  | "team-hornets"
+  | "team-bulls"
+  | "team-cavaliers"
+  | "team-mavericks"
+  | "team-nuggets"
+  | "team-pistons"
+  | "team-warriors"
+  | "team-rockets"
+  | "team-pacers"
+  | "team-clippers"
+  | "team-lakers"
+  | "team-grizzlies"
+  | "team-heat"
+  | "team-bucks"
+  | "team-timberwolves"
+  | "team-pelicans"
+  | "team-knicks"
+  | "team-thunder"
+  | "team-magic"
+  | "team-76ers"
+  | "team-suns"
+  | "team-trail-blazers"
+  | "team-kings"
+  | "team-spurs"
+  | "team-raptors"
+  | "team-jazz"
+  | "team-wizards";
 
 export interface MemoryCard {
   id: string;
